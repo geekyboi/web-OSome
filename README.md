@@ -83,6 +83,10 @@ App IDs and the Homebrew Channel tricks for the app list come from
 [webos-launcher](https://github.com/partridgeworks/webos-launcher) (MIT), and the icon
 trick from [Hearth](https://github.com/rudra-avatar/Hearth).
 
+## Licence
+
+MIT, see [LICENSE](LICENSE).
+
 ---
 
 It works on my telly, which is the main thing. Issues and PRs are welcome, but I'll get to
