@@ -13,7 +13,7 @@ var power = require('./power');
 /* ---------------------------------------------------------------
    Luna (the TV app talks to the service this way)
 ---------------------------------------------------------------- */
-var service = null, layoutSubs = {}, infoSubs = {};
+var service = null, layoutSubs = {}, infoSubs = {}, activitySubs = {};
 // Send payload to every subscriber in subs.
 function notify(subs, payload) {
   Object.keys(subs).forEach(function (k) { try { subs[k].respond(payload); } catch (e) { delete subs[k]; } });
@@ -42,6 +42,21 @@ function startLuna() {
     service.subscribe('luna://com.webos.service.tvpower/power/getPowerState', { subscribe: true })
       .on('response', function (m) { var st = m.payload && m.payload.state; if (st) { power.powerChanged(st); } });
   } catch (e) { log('power state not available', e.message); }
+  // Volume and mute keys go to the system UI, not the TV app, so pass them on (activity)
+  // to undim it. The first reply (no cause) is just the current volume.
+  try {
+    var lastMute = null;
+    service.subscribe('luna://com.webos.service.audio/master/getVolume', { subscribe: true })
+      .on('response', function (m) {
+        var p = m.payload || {}, vs = p.volumeStatus || {}, cause = p.cause || vs.cause || '';
+        var mute = typeof vs.muteStatus === 'boolean' ? vs.muteStatus : p.muteStatus;
+        var muteChanged = lastMute !== null && typeof mute === 'boolean' && mute !== lastMute;
+        if (typeof mute === 'boolean') { lastMute = mute; }
+        if (cause === 'volumeUp' || cause === 'volumeDown' || /mute/i.test(cause) || muteChanged) {
+          notify(activitySubs, { returnValue: true, cause: cause || 'mute' });
+        }
+      });
+  } catch (e) { log('volume not available', e.message); }
 
   service.register('start', function (m) { m.respond({ returnValue: true, started: true, root: IS_ROOT }); });
 
@@ -57,6 +72,11 @@ function startLuna() {
     if (m.isSubscription) { infoSubs[m.uniqueToken] = m; }
     m.respond(infoPayload());
   }, function (m) { delete infoSubs[m.uniqueToken]; });
+
+  service.register('activity', function (m) {
+    if (m.isSubscription) { activitySubs[m.uniqueToken] = m; }
+    m.respond({ returnValue: true });
+  }, function (m) { delete activitySubs[m.uniqueToken]; });
 
   service.register('getLayout', function (m) {
     if (m.isSubscription) { layoutSubs[m.uniqueToken] = m; }

@@ -15,6 +15,7 @@
      getPlugins  (sub)      { plugins: [{ id, name, description, version, order, rev, tile, editor, service }] }
      plugin      (sub)      { id, topic }   a plugin's data, e.g. the calendar's events (its service.js: api.topic)
      pluginCall             { id, method, params }   a one-off request to a plugin (its service.js: api.method)
+     activity    (sub)      { cause }   a volume or mute key was pressed (the system UI takes those keys, so the app never sees them)
 
    The tiles (clock, weather, calendar, bins, now playing...) are plugins: folders in the
    app's plugins/ folder. Their service parts (service.js) run inside this service; see
