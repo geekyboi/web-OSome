@@ -67,14 +67,6 @@ foreground() {
     sed -n 's/.*"appId" *: *"\([^"]*\)".*/\1/p'
 }
 
-# The power button was pressed: open TV Home straight away, before LG moves the app in front
-# out of the way (about 0.3 s), so TV Home is the last app and Start-up "Last source" opens
-# it on wake instead of resuming e.g. Netflix behind LG's loading cover.
-leave_home() {
-  log "switching off, opening $APP so it's the last app"
-  launch
-}
-
 launch() {
   log "opening $APP"
   $LUNA -n 1 luna://com.webos.applicationManager/launch "{\"id\":\"$APP\"}" </dev/null >/dev/null 2>&1 ||
@@ -95,10 +87,6 @@ while true; do
   # service is ready, or if it restarts), wait and subscribe again.
   $LUNA -i luna://com.webos.service.tvpower/power/getPowerState '{"subscribe":true}' 2>/dev/null |
   while read -r line; do
-    case "$line" in   # the power button, before the state changes
-      *'Request Power Off'*|*'Request Active Standby'*|*'Request Suspend'*)
-        [ "$(cat "$STATEF" 2>/dev/null)" = Active ] && leave_home & ;;
-    esac
     st=$(echo "$line" | sed -n 's/.*"state" *: *"\([^"]*\)".*/\1/p')
     [ -z "$st" ] && continue
     last=$(cat "$STATEF" 2>/dev/null)
