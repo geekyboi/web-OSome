@@ -18,6 +18,8 @@ APP_GUARD=5        # for this many seconds, also take the screen back from an ap
                    # This also overrides switching on with an app button on the remote.
 WAKE_WAIT=3        # on a wake from standby, wait this long for "Last source" to open TV Home
                    # before stepping in. 0 = open straight away (for Home Auto Launch).
+COVER_CLEAR=6      # on a wake, this many seconds in, close LG's white loading cover if it's
+                   # stuck (it also closes LG menus opened by then). 0 = off.
 
 LOG=/tmp/tvhome-autostart.log      # cleared when the TV restarts
 PIDF=/tmp/tvhome-autostart.pid
@@ -40,12 +42,18 @@ open_home() {
   # On a wake, Start-up "Last source" usually opens TV Home itself: give it WAKE_WAIT seconds,
   # and only step in if something else is in front. Opening it as well strands LG's loading cover.
   if [ "$1" = wake ] && [ "$WAKE_WAIT" -gt 0 ]; then
-    sleep "$WAKE_WAIT"
+    [ "$COVER_CLEAR" -gt 0 ] && (sleep "$COVER_CLEAR"; clear_cover) &
+    airplay=0; i=0
+    while [ $i -lt "$WAKE_WAIT" ]; do   # note whether AirPlay woke the TV
+      sleep 1; i=$((i+1))
+      [ "$(foreground)" = airplay ] && airplay=1
+    done
     [ "$(cat "$STATEF" 2>/dev/null)" = Active ] || return   # switched off again
     fg=$(foreground)
+    if [ "$airplay" = 1 ]; then keep_airplay "$fg"; return; fi
     case "$fg" in
       "$APP") log "$APP in front after ${WAKE_WAIT}s, nothing to do"; return ;;
-      com.webos.app.hdmi*|airplay) log "woke on $fg, leaving it"; return ;;
+      com.webos.app.hdmi*) log "woke on $fg, leaving it"; return ;;
     esac
     log "${fg:-nothing} in front after ${WAKE_WAIT}s"
   fi
@@ -79,6 +87,26 @@ open_home() {
 foreground() {
   $LUNA -n 1 luna://com.webos.applicationManager/getForegroundAppInfo '{}' </dev/null 2>/dev/null |
     sed -n 's/.*"appId" *: *"\([^"]*\)".*/\1/p'
+}
+
+# AirPlay woke the TV, but "Last source" may open TV Home over it: bring AirPlay back once.
+keep_airplay() {
+  fg=$1; i=0
+  while [ "$fg" != "$APP" ] && [ $i -lt 5 ]; do sleep 1; i=$((i+1)); fg=$(foreground); done
+  if [ "$fg" = "$APP" ]; then
+    log "AirPlay woke the TV and $APP covered it: bringing AirPlay back"
+    $LUNA -n 1 luna://com.webos.applicationManager/launch '{"id":"airplay"}' </dev/null >/dev/null 2>&1
+  else
+    log "woke on airplay, leaving it"
+  fi
+}
+
+# Close LG's start-up cover (the white "<app> loading" screen) if it's still up. It can get
+# stuck, and otherwise only gives up after 2 minutes. Also closes LG's other overlays.
+clear_cover() {
+  [ "$(cat "$STATEF" 2>/dev/null)" = Active ] || return
+  log "clearing LG's start-up cover, if any"
+  $LUNA -n 1 luna://com.webos.surfacemanager.systemui/closeAllSystemUI '{}' </dev/null >/dev/null 2>&1
 }
 
 launch() {
