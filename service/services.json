@@ -1,0 +1,7 @@
+{
+  "id": "net.local.tvhome.service",
+  "description": "TV Home: web editor and layout storage",
+  "services": [
+    { "name": "net.local.tvhome.service" }
+  ]
+}

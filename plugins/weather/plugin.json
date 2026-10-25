@@ -1,0 +1,6 @@
+{
+  "name": "Weather",
+  "description": "The weather now and for the next two hours, in the clock bar (Open-Meteo, no account needed).",
+  "version": "1.0.0",
+  "order": 10
+}

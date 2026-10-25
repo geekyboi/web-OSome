@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=1920, initial-scale=1">
+  <title>TV Home</title>
+  <!-- holding screen: inline, so it's painted before anything else loads -->
+  <style>
+    #hold { position: absolute; left: 0; top: 0; width: 100%; height: 100%; z-index: 30; background: #000;
+            display: flex; align-items: center; justify-content: center; transition: opacity 0.7s ease; }
+    #hold svg { opacity: 0; animation: holdin 0.8s ease 0.5s forwards; }   /* only shows if loading takes a moment */
+    #hold.out { opacity: 0; pointer-events: none; }
+    @keyframes holdin { to { opacity: 0.5; } }
+  </style>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="stage">
+   <div id="shift">
+    <canvas id="bg" width="1928" height="1088"></canvas>
+    <div id="shade"></div>
+
+    <div id="status" title="">
+      <canvas class="gcv" id="statusglass"></canvas>
+      <span class="sheen"></span>
+      <span class="house">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11.2 12 4l8 7.2V19a1 1 0 0 1-1 1h-4.5v-5.5h-5V20H5a1 1 0 0 1-1-1z"></path></svg>
+        <span id="hadot"></span>
+      </span>
+      <!-- plugins in the status capsule (clock, weather) go here -->
+    </div>
+
+    <!-- the other plugins' tiles (greeting, calendar, bins, now playing...) are added here, from plugins/ -->
+
+    <div id="gear" role="button" aria-label="Settings"></div>
+
+    <main id="dock"></main>
+   </div>
+
+    <div id="toast" role="status"></div>
+
+    <div id="dimmer"></div>
+
+    <div id="settings" role="dialog" aria-label="Settings"></div>
+  </div>
+
+  <div id="hold" aria-hidden="true">
+    <svg viewBox="0 0 24 24" width="72" height="72" fill="none" stroke="#fff" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11.2 12 4l8 7.2V19a1 1 0 0 1-1 1h-4.5v-5.5h-5V20H5a1 1 0 0 1-1-1z"></path></svg>
+  </div>
+
+  <script src="js/config.js"></script>
+  <script src="js/bgdraw.js"></script>
+  <!-- the launcher itself: plain scripts sharing one scope, in this order -->
+  <script src="js/core/util.js"></script>
+  <script src="js/core/layout.js"></script>
+  <script src="js/core/luna.js"></script>
+  <script src="js/core/actions.js"></script>
+  <script src="js/core/tv-icons.js"></script>
+  <script src="js/core/service-link.js"></script>
+  <script src="js/core/plugins.js"></script>
+  <script src="js/core/dock.js"></script>
+  <script src="js/core/glass.js"></script>
+  <script src="js/core/tone.js"></script>
+  <script src="js/core/main.js"></script>
+  <script src="js/qr.js"></script>
+  <script src="js/settings-sources.js"></script>
+  <script src="js/settings.js"></script>
+</body>
+</html>

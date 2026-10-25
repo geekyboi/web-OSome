@@ -1,0 +1,6 @@
+{
+  "name": "Clock",
+  "description": "The time in the capsule at the top right, with a blinking colon.",
+  "version": "1.0.0",
+  "order": 20
+}

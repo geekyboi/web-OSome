@@ -1,0 +1,6 @@
+{
+  "name": "Greeting",
+  "description": "Good morning, afternoon or evening at the top left.",
+  "version": "1.0.0",
+  "order": 10
+}

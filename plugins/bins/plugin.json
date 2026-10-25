@@ -1,0 +1,6 @@
+{
+  "name": "Bins",
+  "description": "Which bins go out, from the evening before collection until the morning (dates from Home Assistant).",
+  "version": "1.0.0",
+  "order": 10
+}

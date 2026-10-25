@@ -1,0 +1,683 @@
+/* TV Home: category dock with liquid-glass icons.
+   Built for a TV GPU: no backdrop-filter. Each glass surface carries a small canvas holding a
+   pre-blurred copy of the scene behind it, and focus feedback only animates transform/opacity. */
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  width: 1920px;
+  height: 1080px;
+  overflow: hidden;
+  background: #000;
+  color: #fff;
+  font-family: "LG Smart UI", "LG Smart UI EN", "Inter", "Helvetica Neue", Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  cursor: default;
+}
+
+#stage {
+  position: absolute;
+  left: 0; top: 0;
+  width: 1920px;
+  height: 1080px;
+  overflow: hidden;
+  background: #000;
+  transform-origin: 0 0;
+}
+
+/* ---------- background: one full-page image ---------- */
+#bg {
+  position: absolute;
+  left: 0; top: 0;
+  width: 1920px; height: 1080px;
+  pointer-events: none;
+  transition: opacity 2s ease;
+}
+
+/* ---------- glass (shared recipe) ---------- */
+.gcv {
+  position: absolute;
+  left: 0; top: 0;
+  width: 100%; height: 100%;
+  border-radius: inherit;
+}
+
+/* ---------- status capsule ---------- */
+#status {
+  position: absolute;
+  right: 96px; top: 60px;
+  height: 84px;
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  padding: 0 38px 0 30px;
+  border-radius: 42px;
+  background: linear-gradient(155deg, rgba(255, 255, 255, 0.20), rgba(255, 255, 255, 0.06) 45%, rgba(255, 255, 255, 0.12));
+  box-shadow:
+    inset 0 1.5px 0 rgba(255, 255, 255, 0.55),
+    inset 0 -1.5px 0 rgba(255, 255, 255, 0.14),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.12),
+    0 14px 30px rgba(0, 0, 0, 0.55);
+  transition: opacity 2s ease, transform 1s ease;
+}
+#status.empty { display: none; }     /* no plugin in it (js/core/dock.js placeGear) */
+#status .sheen {
+  position: absolute;
+  left: 12px; right: 12px; top: 3px;            /* fixed, so it spans the bar at any width */
+  height: 34px;
+  border-radius: 36px 36px 20px 20px / 26px 26px 8px 8px;   /* follows the pill's round ends */
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.26), rgba(255, 255, 255, 0));
+}
+/* Home Assistant: hidden while it's reachable; a house with a red dot only when it isn't */
+#status .house { position: relative; display: none; width: 20px; height: 20px; opacity: 0.85; }
+#status .house.bad { display: block; }
+#hadot {
+  position: absolute;
+  right: -2px; top: -2px;
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: #ff7a6b;
+}
+
+
+/* ---------- dock ---------- */
+#dock {
+  position: absolute;
+  left: 140px; top: 420px;
+  width: 1500px;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  transition: opacity 2s ease;
+}
+.cat { position: relative; }
+
+.head {
+  position: relative;
+  left: -56px;
+  display: inline-block;
+  padding: 10px 0;
+  font-weight: 500;
+  font-size: 28px;
+  line-height: 1;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.38);
+  cursor: pointer;
+  transition: color 0.25s ease;
+}
+.cat.open .head { color: #fff; }
+
+/* Only the selected category shows its apps. The row leaving goes at once (no half-faded
+   icons left behind) and the row arriving fades and settles in. Only opacity/transform
+   animate: animating max-height re-laid out the whole dock every frame, which the TV
+   can't keep up with. */
+.row {
+  position: relative;
+  display: none;
+}
+.cat.open .row {
+  display: block;
+  animation: rowin 0.45s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+@keyframes rowin { from { opacity: 0; transform: translateY(-14px); } to { opacity: 1; transform: none; } }
+.tiles {
+  display: flex;
+  gap: 30px;
+  position: relative;
+  padding: 42px 0 82px 0;
+}
+
+/* ---------- icons: bare glyphs at rest, brand-coloured squircle on focus ---------- */
+.disc {
+  position: relative;
+  flex: 0 0 auto;
+  width: 132px; height: 132px;
+  border-radius: 34%;
+  cursor: pointer;
+  transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.disc.focus { transform: translateY(-4px) scale(1.14); }
+.disc.fire  { animation: pulse 0.4s ease; }
+@keyframes pulse {
+  0%   { transform: translateY(-4px) scale(1.14); }
+  35%  { transform: translateY(-2px) scale(1.04); }
+  100% { transform: translateY(-4px) scale(1.14); }
+}
+/* once per launch: the open row's icons fade and rise in one after another (delays set by js/core/main.js) */
+#dock.intro .cat.open .disc { animation: tilein 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+#dock.intro .cat.open .disc.focus { animation-name: tilein-focus; }
+@keyframes tilein { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+@keyframes tilein-focus { from { opacity: 0; transform: translateY(8px) scale(1.14); } to { opacity: 1; transform: translateY(-4px) scale(1.14); } }
+
+.bodyon, .sheen2, .caustic {
+  position: absolute;
+  pointer-events: none;
+  opacity: 0.6;
+  transition: opacity 0.2s ease;
+}
+/* --c / --g are set per tile from its "color"; the fallback is the violet-pink gradient */
+.bodyon {
+  left: 0; top: 0; right: 0; bottom: 0;
+  border-radius: 34%;
+  background: var(--c, linear-gradient(145deg, #8b5cff, #e05bd8));
+  box-shadow:
+    inset 0 0 0 0px rgba(255, 255, 255, 0.3),
+    0 0 24px var(--g, rgba(160, 100, 255, 0.55)),
+    0 20px 44px rgba(0, 0, 0, 0.6);
+}
+.sheen2 {
+  left: 12%; top: 5%;
+  width: 76%; height: 46%;
+  border-radius: 34% 34% 26% 26% / 50% 50% 32% 32%;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.42), rgba(255, 255, 255, 0.03));
+}
+.caustic {
+  left: 20%; bottom: 4%;
+  width: 60%; height: 24%;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(255, 255, 255, 0.24), rgba(255, 255, 255, 0));
+}
+.disc.focus .bodyon { opacity: 1; }
+.disc.focus .sheen2,
+.disc.focus .caustic { opacity: 0.85; }
+
+.glyph {
+  position: absolute;
+  left: 0; top: 0; right: 0; bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  opacity: 0.72;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+.disc.focus .glyph { opacity: 1; }
+.glyph svg { display: block; }
+.txt {
+  font-weight: 600;
+  font-size: 48px;
+  line-height: 1;
+  letter-spacing: -0.01em;
+  text-shadow: 0 1px 10px rgba(0, 0, 0, 0.3);
+}
+.glyph-img {
+  max-width: 100px;             /* room for wide logos such as Apple TV's */
+  max-height: 66px;
+  object-fit: contain;
+}
+.glyph-img:not(.color) { filter: brightness(0) invert(1); }
+
+/* the name appears under the focused icon only */
+.label {
+  position: absolute;
+  left: 50%; top: 155px;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  font-weight: 500;
+  font-size: 25px;
+  line-height: 1;
+  letter-spacing: 0.01em;
+  color: rgba(255, 255, 255, 0.8);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  pointer-events: none;
+}
+.disc.focus .label { opacity: 1; }
+
+/* no transitions while a row scrolls, so icons don't flash as they change slot */
+.jump .disc,
+.jump .disc *,
+.jump .disc::after { transition: none !important; }
+
+/* ---------- paging arrows (rows with more icons than fit) ---------- */
+.arrow {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 64px; height: 64px;
+  border-radius: 34%;
+  background: rgba(255, 255, 255, 0.05);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.22);
+  color: #fff;
+  cursor: pointer;
+}
+/* Both arrows sit 34px below the top of the icons (centred on a 132px icon), so they
+   stay level with each other whatever the row's top padding is. */
+.arrow { margin-top: 34px; }
+.arrow.prev { position: absolute; left: -100px; top: auto; }   /* top:auto keeps it at the row's padding edge, like the icons */
+
+/* ---------- toast ---------- */
+#toast {
+  position: absolute;
+  right: 96px; top: 168px;
+  max-width: 760px;
+  padding: 16px 30px 16px 26px;
+  border-radius: 36px;
+  background: rgba(22, 26, 32, 0.92);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), inset 0 0 0 1px rgba(255, 255, 255, 0.12), 0 14px 30px rgba(0, 0, 0, 0.55);
+  font-size: 26px;
+  opacity: 0;
+  transform: translateY(-10px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  pointer-events: none;
+}
+#toast.show { opacity: 1; transform: none; }
+#toast::before {
+  content: "";
+  display: inline-block;
+  width: 14px; height: 14px;
+  margin-right: 14px;
+  border-radius: 7px;
+  background: #5be3a3;
+}
+#toast.error::before { background: #ff7a6b; }
+
+
+/* ---------- settings button (left of the clock) ---------- */
+#gear {
+  position: absolute;
+  top: 70px; right: 420px;          /* right is set by js/core/dock.js from the clock capsule's width */
+  width: 64px; height: 64px;
+  border-radius: 34%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.72);
+  background: rgba(255, 255, 255, 0.05);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18);
+  cursor: pointer;
+  transform: none;
+  transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 2s ease;
+}
+#gear.focus {
+  color: #fff;
+  background: linear-gradient(145deg, #8b5cff, #e05bd8);
+  box-shadow: 0 0 24px rgba(160, 100, 255, 0.55), 0 14px 30px rgba(0, 0, 0, 0.6);
+  transform: scale(1.12);
+}
+#gear svg { display: block; }
+
+/* ---------- settings screen ---------- */
+#toast { z-index: 20; }               /* confirmations show above Settings */
+#settings {
+  display: none;
+  position: absolute;
+  left: 0; top: 0;
+  width: 1920px; height: 1080px;
+  background: #07070b;
+  z-index: 10;
+}
+#settings.show { display: block; }
+
+.s-title {
+  position: absolute;
+  left: 84px; top: 60px;
+  height: 84px;
+  display: flex;
+  align-items: center;
+  font-weight: 300;
+  font-size: 46px;
+  line-height: 1;
+}
+.s-top {
+  position: absolute;
+  right: 96px; top: 70px;
+  display: flex;
+  gap: 20px;
+}
+.s-btn {
+  height: 64px;
+  padding: 0 32px;
+  border-radius: 22px;
+  display: flex;
+  align-items: center;
+  font-size: 26px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.85);
+  background: rgba(255, 255, 255, 0.06);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.16);
+  cursor: pointer;
+}
+.s-reset.armed { color: #ffb4a8; }
+
+.s-tabs { display: flex; gap: 14px; }
+#s-cats { position: absolute; left: 84px; top: 186px; }
+.s-tab {
+  height: 60px;
+  padding: 0 28px;
+  border-radius: 30px;
+  display: flex;
+  align-items: center;
+  font-size: 24px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+}
+.s-tab.on { color: #fff; background: rgba(255, 255, 255, 0.12); }
+.s-srcs .s-tab { height: 54px; font-size: 21px; padding: 0 22px; }
+
+.s-panel {
+  position: absolute;
+  top: 282px; bottom: 56px;
+  width: 846px;
+  padding: 28px 30px 20px;
+  border-radius: 36px;
+  background: rgba(255, 255, 255, 0.04);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.07);
+  display: flex;
+  flex-direction: column;
+}
+.s-left  { left: 84px; }
+.s-right { left: 990px; }
+.s-h {
+  font-size: 21px;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.5);
+  margin: 4px 0 18px;
+}
+.s-msg { white-space: pre-line; font-size: 21px; line-height: 1.35; color: rgba(255, 255, 255, 0.55); margin: 16px 4px 10px; min-height: 28px; }
+.s-msg.err { color: #ffb4a8; }
+.s-list {
+  position: relative;
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  margin: 0 -12px;
+  padding: 4px 12px;
+}
+.s-list::-webkit-scrollbar { width: 0; height: 0; }
+.s-empty { font-size: 24px; color: rgba(255, 255, 255, 0.45); padding: 24px 4px; }
+
+.s-row, .s-item {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  min-height: 92px;
+  padding: 10px 12px;
+  border-radius: 24px;
+}
+.s-row + .s-row { box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06); }
+.s-item { cursor: pointer; }
+.s-item.added { opacity: 0.55; }
+
+.s-ico {
+  flex: 0 0 auto;
+  width: 64px; height: 64px;
+  border-radius: 34%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(145deg, #8b5cff, #e05bd8);
+  color: #fff;
+  overflow: hidden;
+}
+.s-ico svg { width: 34px; height: 34px; display: block; }
+.s-ico img { max-width: 40px; max-height: 40px; }
+.s-ico img:not(.color) { filter: brightness(0) invert(1); }
+.s-txt { font-size: 26px; font-weight: 600; line-height: 1; }
+
+.s-txtcol { flex: 1; min-width: 0; }
+.s-name { font-size: 28px; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.s-sub  { font-size: 19px; line-height: 1.3; color: rgba(255, 255, 255, 0.45); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.s-input {
+  width: 100%;
+  height: 58px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 16px;
+  outline: none;
+  font: inherit;
+  font-size: 28px;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.1);
+  box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, 0.5);
+}
+
+.s-ib {
+  flex: 0 0 auto;
+  width: 58px; height: 58px;
+  border-radius: 34%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.06);
+  cursor: pointer;
+}
+.s-ib.off { opacity: 0.3; }
+.s-ib svg { display: block; }
+
+.s-add {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 22px;
+  color: rgba(255, 255, 255, 0.7);
+  padding-right: 6px;
+}
+
+/* the one focused control */
+.sf.sfocus {
+  color: #fff;
+  background: linear-gradient(145deg, #8b5cff, #e05bd8);
+  box-shadow: 0 0 22px rgba(160, 100, 255, 0.45);
+  opacity: 1;
+}
+.s-item.sfocus .s-sub, .s-item.sfocus .s-add { color: rgba(255, 255, 255, 0.85); }
+.s-input.sfocus { background: rgba(255, 255, 255, 0.14); box-shadow: inset 0 0 0 2px #b89bff, 0 0 22px rgba(160, 100, 255, 0.45); }
+
+/* ---------- the TV's own app icons (rooted TVs, via the Homebrew Channel) ---------- */
+/* An app's own icon is opaque, and its colour (.bodyon) sits behind it, so at rest both are
+   turned down further than a plain tile's to look equally see-through (about 60%). */
+.disc.art .glyph { opacity: 0.55; }
+.disc.art .bodyon { opacity: 0.15; }
+.disc.art.focus .glyph { opacity: 1; }
+.disc.art.focus .bodyon { opacity: 1; }
+.disc.art .glyph-img {
+  width: 100%; height: 100%;
+  max-width: none; max-height: none;
+  border-radius: 34%;
+  object-fit: cover;
+}
+.disc.art .bodyon { background: var(--c, #1c1c22); }
+/* keep the glass highlights, drawn over the icon */
+.disc.art .glyph { z-index: 1; }
+.disc.art .sheen2, .disc.art .caustic { z-index: 2; }
+/* rim shading: on white icons (Netflix, YouTube) the white sheen disappears, so a soft darker
+   edge and base are what keep them looking like rounded glass. Static, so cheap to draw. */
+.disc.art::after {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; right: 0; bottom: 0;
+  border-radius: 34%;
+  z-index: 2;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0) 50%, rgba(0, 0, 0, 0.15));
+  box-shadow:
+    inset 0 -8px 18px rgba(0, 0, 0, 0.2),
+    inset 0 0 0 1.5px rgba(0, 0, 0, 0.08),
+    inset 0 1.5px 0 rgba(255, 255, 255, 0.2);
+  opacity: 0.6;
+  transition: opacity 0.2s ease;
+}
+.disc.art.focus::after { opacity: 1; }
+.s-ico.art { background: transparent; }
+.s-ico.art img { width: 100%; height: 100%; max-width: none; max-height: none; object-fit: cover; }
+.s-ib.s-lock { background: transparent; color: rgba(255, 255, 255, 0.4); cursor: default; }
+
+/* ---------- Settings: Phone & laptop (web editor QR code) ---------- */
+.s-phonepanel {
+  position: absolute;
+  left: 0; top: 0; width: 1920px; height: 1080px;
+  background: rgba(4, 4, 8, 0.86);
+  z-index: 15;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 36px;
+}
+.s-phonecard {
+  display: flex;
+  align-items: center;
+  gap: 64px;
+  padding: 56px 64px;
+  max-width: 1500px;
+  border-radius: 40px;
+  background: #121218;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08), 0 30px 80px rgba(0, 0, 0, 0.6);
+}
+.s-qr { width: 440px; height: 440px; border-radius: 24px; image-rendering: pixelated; flex: 0 0 auto; }
+.s-ph-side { max-width: 760px; }
+.s-ph-title { font-size: 44px; font-weight: 300; margin-bottom: 26px; }
+.s-ph-text { font-size: 27px; line-height: 1.4; color: rgba(255, 255, 255, 0.7); margin: 10px 0; }
+.s-ph-url { font-size: 36px; font-weight: 500; margin: 6px 0 22px; letter-spacing: 0.01em; }
+.s-ph-pass {
+  display: inline-block;
+  font-size: 64px; font-weight: 600; letter-spacing: 0.16em;
+  margin: 10px 0 0; padding: 10px 26px;
+  border-radius: 20px; background: rgba(255, 255, 255, 0.08);
+  font-variant-numeric: tabular-nums;
+}
+.s-ph-code {
+  font-family: "DejaVu Sans Mono", monospace; font-size: 24px; color: #fff;
+  background: rgba(255, 255, 255, 0.07); padding: 14px 18px; border-radius: 14px; margin: 14px 0;
+  word-break: break-all;
+}
+.s-ph-buttons { display: flex; gap: 20px; }
+
+/* ---------- readable text on any background ---------- */
+/* a soft shadow keeps white text legible over busy pictures */
+.head, .label { text-shadow: 0 2px 16px rgba(0, 0, 0, 0.45); }
+
+/* .ink = dark text, used where the picture behind is light (or when chosen in the editor) */
+#dock.ink .head { color: rgba(14, 14, 20, 0.5); text-shadow: 0 1px 12px rgba(255, 255, 255, 0.6); }
+#dock.ink .cat.open .head { color: #0e0e14; }
+#dock.ink .label { color: rgba(14, 14, 20, 0.88); text-shadow: 0 1px 10px rgba(255, 255, 255, 0.65); }
+#dock.ink .arrow {
+  color: #14141a;
+  background: rgba(255, 255, 255, 0.5);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.14);
+}
+#status.ink {
+  background: linear-gradient(155deg, rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0.5) 45%, rgba(255, 255, 255, 0.62));
+  box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, 0.9), inset 0 0 0 1px rgba(0, 0, 0, 0.08), 0 14px 30px rgba(0, 0, 0, 0.18);
+}
+#status.ink .gcv { opacity: 1; }   /* the white tint is baked into the blurred copy (paintOne) */
+#status.ink .house svg { stroke: #14141a; }
+#gear.ink:not(.focus) {
+  color: #14141a;
+  background: rgba(255, 255, 255, 0.5);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.14);
+}
+
+/* optional soft shade behind the text area (editor: Settings > Text) */
+#shade {
+  position: absolute; left: 0; top: 0;
+  width: 1920px; height: 1080px;
+  pointer-events: none;
+  opacity: 0;
+  background: linear-gradient(90deg, rgba(0, 0, 0, 0.62) 0%, rgba(0, 0, 0, 0.42) 32%, rgba(0, 0, 0, 0) 62%);
+  transition: opacity 0.6s ease;
+}
+#shade.ink { background: linear-gradient(90deg, rgba(255, 255, 255, 0.6) 0%, rgba(255, 255, 255, 0.4) 32%, rgba(255, 255, 255, 0) 62%); }
+#shade.on { opacity: 1; }
+
+#dock.ink .head {
+  font-weight: 700;
+  color: rgba(14, 14, 20, 0.72);
+  text-shadow: 0 0 2px rgba(255, 255, 255, 0.95), 0 0 10px rgba(255, 255, 255, 0.85), 0 0 24px rgba(255, 255, 255, 0.7);
+}
+#dock.ink .cat.open .head { color: #0a0a10; }
+#dock.ink .label {
+  font-weight: 600;
+  color: #0a0a10;
+  text-shadow: 0 0 2px rgba(255, 255, 255, 0.95), 0 0 10px rgba(255, 255, 255, 0.85), 0 0 22px rgba(255, 255, 255, 0.7);
+}
+
+#dock.busy:not(.ink) .head {
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.78);
+  text-shadow: 0 0 2px rgba(0, 0, 0, 0.8), 0 0 10px rgba(0, 0, 0, 0.6), 0 0 24px rgba(0, 0, 0, 0.45);
+}
+#dock.busy:not(.ink) .cat.open .head { color: #fff; }
+#dock.busy:not(.ink) .label {
+  font-weight: 600;
+  text-shadow: 0 0 2px rgba(0, 0, 0, 0.8), 0 0 10px rgba(0, 0, 0, 0.6), 0 0 22px rgba(0, 0, 0, 0.45);
+}
+#gear.ink:not(.focus) { background: rgba(255, 255, 255, 0.72); }
+
+/* ---------- settings button: the same glass as the clock capsule ---------- */
+#gear {
+  top: 60px;
+  width: 84px; height: 84px;
+  border-radius: 42px;
+  overflow: hidden;
+  color: #fff;
+  background: linear-gradient(155deg, rgba(255, 255, 255, 0.20), rgba(255, 255, 255, 0.06) 45%, rgba(255, 255, 255, 0.12));
+  box-shadow:
+    inset 0 1.5px 0 rgba(255, 255, 255, 0.55),
+    inset 0 -1.5px 0 rgba(255, 255, 255, 0.14),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.12),
+    0 14px 30px rgba(0, 0, 0, 0.55);
+}
+#gear .sheen {
+  position: absolute;
+  left: 10px; right: 10px; top: 3px;
+  height: 34px;
+  border-radius: 50% 50% 50% 50% / 80% 80% 20% 20%;   /* a dome that sits inside the round button */
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.26), rgba(255, 255, 255, 0));
+  pointer-events: none;
+}
+#gear svg { position: relative; width: 34px; height: 34px; opacity: 0.92; }
+#gear.focus {
+  color: #fff;
+  background: linear-gradient(145deg, #8b5cff, #e05bd8);
+  box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, 0.5), 0 0 24px rgba(160, 100, 255, 0.55), 0 14px 30px rgba(0, 0, 0, 0.55);
+  transform: scale(1.08);
+}
+#gear.focus .gcv { opacity: 0; }
+#gear.focus svg { opacity: 1; }
+/* on light pictures: light glass with a dark icon, exactly like the clock */
+#gear.ink:not(.focus) {
+  color: #14141a;
+  background: linear-gradient(155deg, rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0.5) 45%, rgba(255, 255, 255, 0.62));
+  box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, 0.9), inset 0 0 0 1px rgba(0, 0, 0, 0.08), 0 14px 30px rgba(0, 0, 0, 0.18);
+}
+#gear.ink:not(.focus) .gcv { opacity: 1; }
+
+/* ---------- dark text: a subtler white glow ---------- */
+#dock.ink .head { text-shadow: 0 0 1px rgba(255, 255, 255, 0.6), 0 0 8px rgba(255, 255, 255, 0.4); }
+#dock.ink .label { text-shadow: 0 0 1px rgba(255, 255, 255, 0.6), 0 0 8px rgba(255, 255, 255, 0.45); }
+
+/* ---------- idle dim: one dark layer over everything, so every part dims evenly
+   (fading parts separately left the glass panels lighter than the dimmed picture) ---------- */
+#dimmer {
+  position: absolute; left: 0; top: 0;
+  width: 1920px; height: 1080px;
+  background: #000;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 2s ease;
+  z-index: 9;                        /* above the home screen, below Settings (10) and messages */
+}
+#stage.dim #dimmer { opacity: 0.8; }
+
+/* ---------- OLED pixel shift: everything moves together, at most 2 px, very slowly ---------- */
+#shift {
+  position: absolute; left: 0; top: 0;
+  width: 1920px; height: 1080px;
+  transition: transform 60s linear;
+}
+#shift #bg { left: -4px; top: -4px; width: 1928px; height: 1088px; }   /* spare edge, so the move never shows a border */
+

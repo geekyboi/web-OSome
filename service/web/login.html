@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="color-scheme" content="dark">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>TV Home</title>
+<link rel="stylesheet" href="/editor.css">
+</head>
+<body class="login">
+  <main class="login-box">
+    <div class="brand"><span class="logo" aria-hidden="true"></span>TV Home</div>
+    <h1>Sign in</h1>
+    <p class="muted">On the TV, open TV Home's Settings and choose <b>Phone &amp; laptop</b>. Scan the QR code, or type the password shown there.</p>
+    <!--MSG-->
+    <form method="post" action="/login">
+      <label for="key">Password</label>
+      <input id="key" name="key" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="12" required autofocus>
+      <button class="btn primary" type="submit">Sign in</button>
+    </form>
+  </main>
+</body>
+</html>

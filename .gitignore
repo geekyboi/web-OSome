@@ -1,0 +1,13 @@
+# macOS
+.DS_Store
+
+# packaged app
+*.ipk
+
+# the TV's own app list, if you make one (see docs/GUIDE.md)
+launchpoints.json
+
+# local overrides and anything secret: keep it out of git
+*.local.js
+.env
+node_modules/

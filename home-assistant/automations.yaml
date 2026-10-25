@@ -1,0 +1,57 @@
+# Home Assistant snippets for TV Home.
+# Replace entity ids / webhook ids with your own.
+
+# ---------------------------------------------------------------------------
+# 1) Open TV Home whenever the TV turns on  (no root needed)
+#    Uses the built-in "LG webOS TV" integration. The launch command and the
+#    `id:` payload key are the form reported working on a 2023 LG TV in the HA
+#    community; the id below must match this app's id in appinfo.json.
+# ---------------------------------------------------------------------------
+- alias: "TV: open TV Home on power on"
+  mode: single
+  trigger:
+    - platform: state
+      entity_id: media_player.lg_tv          # <- your TV's media_player entity
+      from: "off"
+      to: "on"
+  action:
+    - delay: "00:00:04"                      # let the TV finish waking up
+    - service: webostv.command
+      data:
+        entity_id: media_player.lg_tv
+        command: com.webos.applicationManager/launch
+        payload:
+          id: net.local.tvhome
+
+# ---------------------------------------------------------------------------
+# 2) Webhook automations that the tiles in js/config.js call.
+#    Each tile posts to  http://<HA>:8123/api/webhook/<webhook_id>
+#    "local_only: true" (the default) is fine: the TV is on your LAN.
+# ---------------------------------------------------------------------------
+- alias: "TV Home: PlayStation on"
+  trigger:
+    - platform: webhook
+      webhook_id: tv_ps5_on
+      allowed_methods: [POST]
+      local_only: true
+  action:
+    # Examples: swap for whatever actually controls your kit
+    - service: media_player.turn_on
+      target: { entity_id: media_player.ps5 }          # PlayStation integration
+    - service: media_player.select_source
+      target: { entity_id: media_player.amplifier }
+      data: { source: "GAME" }                         # your amp's input name
+
+- alias: "TV Home: Amp movie mode"
+  trigger:
+    - platform: webhook
+      webhook_id: amp_movie
+      allowed_methods: [POST]
+      local_only: true
+  action:
+    - service: media_player.select_sound_mode
+      target: { entity_id: media_player.amplifier }
+      data: { sound_mode: "Movie" }
+
+# If you add `data: { scene: "movie" }` to a tile in config.js, the value arrives
+# as  {{ trigger.data.scene }}  (the TV sends it form-encoded).

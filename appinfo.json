@@ -1,0 +1,16 @@
+{
+  "id": "net.local.tvhome",
+  "version": "1.0.0",
+  "vendor": "Home",
+  "type": "web",
+  "main": "index.html",
+  "title": "TV Home",
+  "icon": "icon.png",
+  "largeIcon": "largeIcon.png",
+  "noSplashOnLaunch": true,
+  "spinnerOnLaunch": false,
+  "resolution": "1920x1080",
+  "requiredACG": ["application.launcher", "application.query", "externalinput.query"],
+  "disableBackHistoryAPI": true,
+  "uiRevision": 2
+}

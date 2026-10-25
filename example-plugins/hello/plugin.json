@@ -1,0 +1,6 @@
+{
+  "name": "Hello, world!",
+  "description": "An example plugin: a small glass tile at the bottom of the right-hand column.",
+  "version": "1.0.0",
+  "order": 40
+}

@@ -1,0 +1,82 @@
+/* Now playing plugin: what the MusicCast amplifier is playing, a glass card in the right-hand column */
+/* ---------- now playing on the amplifier (MusicCast) ---------- */
+#nowplaying {
+  position: absolute;
+  right: 96px; top: 176px;               /* top is set by js/core/plugins.js (the right-hand column) */
+  width: 560px;
+  padding: 22px 26px 22px 22px;
+  border-radius: 36px;
+  background: linear-gradient(155deg, rgba(255, 255, 255, 0.20), rgba(255, 255, 255, 0.06) 45%, rgba(255, 255, 255, 0.12));
+  box-shadow:
+    inset 0 1.5px 0 rgba(255, 255, 255, 0.55),
+    inset 0 -1.5px 0 rgba(255, 255, 255, 0.14),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.12),
+    0 14px 30px rgba(0, 0, 0, 0.55);
+  display: none;
+  align-items: center;
+  gap: 24px;
+  transition: opacity 2s ease, transform 1s ease;
+}
+#nowplaying.show { display: flex; }
+#nowplaying .sheen {
+  position: absolute;
+  left: 14px; right: 14px; top: 3px;           /* fixed, so it spans the panel like the clock's */
+  height: 56px;
+  border-radius: 34px 34px 22px 22px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0));
+}
+#nowplaying .npart {
+  position: relative;
+  flex: 0 0 136px;
+  width: 136px; height: 136px;
+  border-radius: 22px;
+  overflow: hidden;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.05));
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.16), 0 8px 20px rgba(0, 0, 0, 0.35);
+  display: flex; align-items: center; justify-content: center;
+  color: rgba(255, 255, 255, 0.6);
+}
+#npimg { position: absolute; left: 0; top: 0; width: 100%; height: 100%; object-fit: cover; display: none; }
+#nowplaying.hasart #npimg { display: block; }
+#nowplaying.hasart .npnote { display: none; }
+#nowplaying.paused .npart { opacity: 0.6; }
+#nowplaying .nptext { position: relative; flex: 1; min-width: 0; }
+#nowplaying .npsrc {
+  display: flex; justify-content: space-between; gap: 12px;
+  font-size: 20px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.6);
+}
+#nptime { letter-spacing: 0.02em; font-weight: 500; font-variant-numeric: tabular-nums; }
+#nowplaying .nptrack {
+  font-size: 32px; font-weight: 600; color: #fff; margin-top: 6px; line-height: 1.2;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.35);
+}
+#nowplaying .npartist {
+  font-size: 23px; color: rgba(255, 255, 255, 0.7); margin-top: 4px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+#nowplaying .npartist:empty { display: none; }
+#nowplaying .npbar {
+  height: 5px; margin-top: 16px; border-radius: 3px; overflow: hidden;
+  background: rgba(255, 255, 255, 0.18);
+}
+#nowplaying .npbar i {
+  display: block; height: 100%; width: 100%;
+  background: rgba(255, 255, 255, 0.85);
+  transform-origin: 0 50%; transform: scaleX(0);
+  transition: transform 1s linear;
+}
+#nowplaying.radio .npbar { display: none; }
+
+#nowplaying.ink {
+  background: linear-gradient(155deg, rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0.5) 45%, rgba(255, 255, 255, 0.62));
+  box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, 0.9), inset 0 0 0 1px rgba(0, 0, 0, 0.08), 0 14px 30px rgba(0, 0, 0, 0.18);
+}
+#nowplaying.ink .gcv { opacity: 1; }
+#nowplaying.ink .npsrc { color: rgba(14, 14, 20, 0.55); }
+#nowplaying.ink .nptrack { color: #0e0e14; text-shadow: none; }
+#nowplaying.ink .npartist { color: rgba(14, 14, 20, 0.7); }
+#nowplaying.ink .npart { color: rgba(14, 14, 20, 0.5); background: rgba(0, 0, 0, 0.06); box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.1); }
+#nowplaying.ink .npbar { background: rgba(0, 0, 0, 0.12); }
+#nowplaying.ink .npbar i { background: rgba(14, 14, 20, 0.75); }
