@@ -228,6 +228,10 @@ function activate(ci, ti) {
   node.classList.remove('fire');
   void node.offsetWidth; // restart the animation
   node.classList.add('fire');
+  // Take it off once it has played: left on, it replays every time the row is shown again
+  // (the icon grows, then snaps back).
+  clearTimeout(node.fireTimer);
+  node.fireTimer = setTimeout(function () { node.classList.remove('fire'); }, 450);
   runActions(d.cfg);
 }
 
