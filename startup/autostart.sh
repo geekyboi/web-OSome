@@ -55,7 +55,7 @@ open_home() {
       "$APP") ;;
       ""|com.webos.app.home|com.webos.app.livetv|com.webos.app.discovery|com.webos.app.lgchannels)
         log "${fg:-nothing} in front after ${i}s, opening again"; launch ;;
-      com.webos.app.hdmi*) log "$fg in front after ${i}s, leaving it"; return ;;
+      com.webos.app.hdmi*|airplay) log "$fg in front after ${i}s, leaving it"; return ;;   # inputs, and AirPlay waking the TV
       *) if [ $i -le "$APP_GUARD" ]; then log "$fg reopened after ${i}s, opening again"; launch
          else log "$fg in front after ${i}s, leaving it"; return; fi ;;
     esac

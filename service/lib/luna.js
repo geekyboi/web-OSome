@@ -43,8 +43,20 @@ function startLuna() {
       .on('response', function (m) { var st = m.payload && m.payload.state; if (st) { power.powerChanged(st); } });
   } catch (e) { log('power state not available', e.message); }
   try {
+    var lastFront = '';
     service.subscribe('luna://com.webos.applicationManager/getForegroundAppInfo', { subscribe: true })
-      .on('response', function (m) { power.foregroundChanged(m.payload && m.payload.appId, 'net.local.tvhome'); });
+      .on('response', function (m) {
+        var app = m.payload && m.payload.appId;
+        // Back out of an app: webOS falls back to LG's home, so open TV Home instead
+        // (not when coming from TV Home itself, an input or LG's home).
+        if (app === 'com.webos.app.home' && lastFront && lastFront !== 'net.local.tvhome' &&
+            !/^com\.webos\.app\.(hdmi|home|livetv)/.test(lastFront)) {
+          log('front', lastFront + ' closed to LG home: opening TV Home');
+          lunaCall('luna://com.webos.applicationManager/launch', { id: 'net.local.tvhome' }, function () {});
+        }
+        if (app) { lastFront = app; }
+        power.foregroundChanged(app, 'net.local.tvhome');
+      });
   } catch (e) { log('foreground app not available', e.message); }
   // Volume and mute keys go to the system UI, not the TV app, so pass them on (activity)
   // to undim it. The first reply (no cause) is just the current volume.
