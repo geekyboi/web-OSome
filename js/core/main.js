@@ -168,6 +168,18 @@ function liftHold() {
 /* ---------------------------------------------------------------
    Go
 ---------------------------------------------------------------- */
+// List TV Home as one of the TV's inputs (if it isn't already), so with Start-up set to
+// "Last source" the TV switches on straight to it, without LG's home first.
+function registerInput() {
+  luna('luna://com.webos.service.eim/getAllInputStatus', {}, function (res) {
+    var listed = ((res && res.devices) || []).some(function (d) { return d && d.appId === 'net.local.tvhome'; });
+    if (listed || (res && res.preview)) { return; }
+    luna('luna://com.webos.service.eim/addDevice', {
+      appId: 'net.local.tvhome', pigImage: '', mvpdIcon: '', showPopup: false,
+      label: 'TV Home', description: 'TV Home'
+    }, function (r) { if (r && r.returnValue === false) { console.log('input not added', r.errorText); } });
+  });
+}
 function init() {
   render();
   fit();
@@ -189,6 +201,7 @@ function init() {
   discoverPlugins();
   connectService();
   liftHold();
+  setTimeout(registerInput, 3000);   // after start-up, so it doesn't slow the first paint
 }
 
 init();

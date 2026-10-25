@@ -242,6 +242,17 @@ music playing with the screen off) or the screen saver.
 - If you used the Home Assistant automation below, turn it off so the two don't
   both open the app.
 
+### Faster: TV Home as an input
+
+TV Home adds itself to the TV's list of inputs the first time it opens. Set the TV's
+start-up to **Last source** (instead of *Home Auto Launch*) and, if TV Home was in front
+when you switched off, the TV opens it directly without LG's home first. Keep the
+startup script too: it covers switching off from another app.
+
+Anything else that restarts LG's screen manager (`surface-manager`) at start-up will
+crash TV Home, and the TV switches itself off after a crash. Don't restart it from an
+`init.d` script.
+
 ### Without root: Home Assistant automation
 
 Copy the first automation from `home-assistant/automations.yaml` into Home
