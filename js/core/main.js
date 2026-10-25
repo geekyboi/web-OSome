@@ -97,18 +97,26 @@ document.addEventListener('mousemove', function () { lastMove = Date.now(); }, t
 document.addEventListener('mousemove', wake);
 document.addEventListener('click', wake);
 
-// Brought back to the front (Home pressed again, or returning from an app).
-function onReturn() {
+// Brought back to the front (Home pressed again, or returning from an app). toStart: Home was
+// pressed while TV Home was already in front, which goes back to the home row's first app.
+function onReturn(toStart) {
   lastMinute = -1;
   tickClock();
   wake();
-  if (!settingsOpen()) { setGear(false); if (cats.length) { select(homeCat, 0); } }
+  if (!settingsOpen()) {
+    if (toStart === true) { focusTile(homeCat, 0); }
+    else { focusTile(cur.c, cur.i); }   // back from an app: where you left it
+  }
   checkHA();
   try { if (window.PalmSystem && window.PalmSystem.activate) { window.PalmSystem.activate(); } } catch (e) { /* ignore */ }
 }
-document.addEventListener('webOSRelaunch', onReturn);
+var shownAt = 0;   // when TV Home last came back to the front
+document.addEventListener('webOSRelaunch', function () {
+  onReturn(!document.hidden && Date.now() - shownAt > 1500);   // already in front: Home pressed on the home screen
+});
 document.addEventListener('visibilitychange', function () {
   if (!document.hidden) {
+    shownAt = Date.now();
     onReturn(); eachPlugin('onShow');
     if (introPending) { introTiles(); }   // right away, so the first visible frame already has them hidden; its 250 ms lead-in covers the screen waking
   }
@@ -166,7 +174,7 @@ function init() {
   tickClock();
   // timers sleep while another app is in front; onReturn() catches everything up
   setInterval(function () { if (!document.hidden) { tickClock(); } }, 1000);
-  if (cats.length) { select(homeCat, 0); }
+  focusTile(homeCat, 0);   // a fresh start: the home row's first app
   var g = $('gear');
   // same glass as the clock capsule: blurred copy of the picture, sheen, icon
   g.innerHTML = '<canvas class="gcv" id="gearglass"></canvas><span class="sheen"></span>' + ICONS.gear;
