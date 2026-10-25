@@ -6,8 +6,7 @@ A home screen for my LG TV that isn't full of adverts.
 
 LG's own home screen is bloated, ad filled and hard to navigate, so
 I made my own. It's a plain web app (HTML, CSS and ES5 JavaScript, no build step, no npm)
-that runs as a normal webOS app. It shows the apps I actually use in a few rows, and a
-tile can poke Home Assistant too, so one button can turn the console and amp on and
+that runs as a normal webOS app. It shows the apps I actually use in a few rows, and plays nice with Home Assistant too, so one button can turn the console and amp on and
 switch to the right HDMI input.
 
 Built for my LG OLED55A2 (webOS 23). It'll probably work on other webOS TVs but I
