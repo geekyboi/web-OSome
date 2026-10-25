@@ -16,6 +16,8 @@ SKIP_IF_HDMI=0     # 1 = don't open TV Home if the TV woke up on an HDMI input
 APP_GUARD=5        # for this many seconds, also take the screen back from an app the TV
                    # reopened by itself (Start-up "Last source" resumes e.g. Netflix). 0 = off.
                    # This also overrides switching on with an app button on the remote.
+CLOSE_COVER=1      # 1 = on a wake from standby, close LG's start-up cover (the white
+                   #     "<app> loading" screen) before it reopens the last app. Not at boot.
 
 LOG=/tmp/tvhome-autostart.log      # cleared when the TV restarts
 PIDF=/tmp/tvhome-autostart.pid
@@ -67,6 +69,13 @@ foreground() {
     sed -n 's/.*"appId" *: *"\([^"]*\)".*/\1/p'
 }
 
+# Close LG's start-up cover, which would otherwise reopen the last app (e.g. Netflix) over TV Home.
+close_cover() {
+  log "closing LG's start-up cover"
+  $LUNA -n 1 luna://com.webos.applicationManager/closeByAppId '{"id":"com.webos.app.cpcover"}' </dev/null >/dev/null 2>&1 ||
+    log "closing the cover failed"
+}
+
 launch() {
   log "opening $APP"
   $LUNA -n 1 luna://com.webos.applicationManager/launch "{\"id\":\"$APP\"}" </dev/null >/dev/null 2>&1 ||
@@ -94,6 +103,7 @@ while true; do
     echo "$st" > "$STATEF"
     log "power: ${last:-start} -> $st"
     if [ "$st" = "Active" ] && was_off "$last"; then
+      [ -n "$last" ] && [ "$CLOSE_COVER" = 1 ] && close_cover &
       if [ -z "$last" ]; then sleep "$BOOT_DELAY"; else sleep "$WAKE_DELAY"; fi
       open_home &     # in the background, so power changes keep being read meanwhile
     fi

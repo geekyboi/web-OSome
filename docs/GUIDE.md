@@ -227,6 +227,8 @@ power state, and when the TV comes back on from standby it opens TV Home straigh
 away. For the next 10 seconds it checks what's on screen: if the TV's own start-up
 puts LG's home screen or Live TV over TV Home, it opens TV Home again, and the same for an
 app the TV reopens by itself in the first 5 seconds (e.g. Netflix with *Last source*).
+On a wake it also closes LG's white "loading" cover before it reopens the last app
+(`CLOSE_COVER=0` turns that off).
 An HDMI input (e.g. a console that woke the TV over HDMI-CEC) or an app you pick
 yourself after that is left alone. It doesn't do this when the screen comes back from *Screen Off* (e.g.
 music playing with the screen off) or the screen saver.
