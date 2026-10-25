@@ -236,6 +236,19 @@ function activate(ci, ti) {
 }
 
 /* ---------------------------------------------------------------
+   Coming back from an app, the focus goes back to the app you were on instead of the
+   first app of the home row.
+---------------------------------------------------------------- */
+// Focus tile i of row c if it's still there (and still the app called name, if given), else the home row's first app.
+function focusTile(c, i, name) {
+  setGear(false);
+  if (!cats.length) { return; }
+  var obj = cats[c];
+  if (!obj || !obj.discs[i] || (name != null && (obj.discs[i].cfg.name || '') !== name)) { c = homeCat; i = 0; }
+  select(c, i);
+}
+
+/* ---------------------------------------------------------------
    Settings button (top right, left of the clock). Up from the top
    section reaches it; the red button on the remote opens Settings too.
 ---------------------------------------------------------------- */
@@ -270,8 +283,9 @@ function openSettings() {
 // Called by Settings when it closes: rebuild the dock from the (possibly edited) layout.
 function rerender() {
   if (svc && svc.pending && !settingsOpen()) { var d = svc.pending; svc.pending = null; applyDoc(d); return; }
+  var was = cur, d = cats[cur.c] && cats[cur.c].discs[cur.i], name = d ? (d.cfg.name || '') : null;
   render();
   cur = { c: -1, i: 0 };
   onGear = false;
-  if (cats.length) { select(homeCat, 0); }
+  focusTile(was.c, was.i, name);   // stay on the same app if the new layout still has it there
 }

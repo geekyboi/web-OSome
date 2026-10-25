@@ -263,8 +263,9 @@ Channel) can remap it. This works on the OLED55A2:
    ```
 3. Save changes. Input Hook keeps working after a restart once it has been opened.
 
-Pressing Home then brings up TV Home from anywhere, and returns it to the top
-section if it's already open. The **LG Home** tile (which can't be removed) is how
+Pressing Home then brings up TV Home from anywhere, with the focus on the app you
+were on (after a restart, the first app of the top section). Pressing Home again while TV Home
+is already open returns it to the top section. The **LG Home** tile (which can't be removed) is how
 you reach LG's own home screen.
 
 Whether your TV can be rooted depends on its exact firmware: LG has patched the
