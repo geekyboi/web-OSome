@@ -49,8 +49,8 @@ ares-install --device tv net.local.tvhome_1.0.0_all.ipk
 ares-launch  --device tv net.local.tvhome
 ```
 
-Heads up: Developer Mode runs out, and the TV removes the app when it does. Renew it
-in the Developer Mode app.
+Heads up: Developer Mode has a time limit, The TV removes the app when it does. You need to Renew it
+in the Developer Mode app if you're TV is not rooted
 
 ## Set it up
 
