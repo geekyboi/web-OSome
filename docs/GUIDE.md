@@ -223,8 +223,9 @@ At start-up the Homebrew Channel runs it, and it starts `startup/autostart.sh` i
 background, then exits immediately. That matters: the Homebrew Channel only clears its
 crash-protection flag once every start-up script has finished, so a script that kept
 running would put the next start in failsafe mode. The watcher listens to the TV's
-power state, and when the TV comes back on from standby it opens TV Home straight
-away. For the next 10 seconds it checks what's on screen: if the TV's own start-up
+power state, and when the TV comes back on from standby it opens TV Home (straight
+away after a full start; after a wake it first gives *Last source* 3 seconds to do it, see
+`WAKE_WAIT`). For the next 10 seconds it checks what's on screen: if the TV's own start-up
 puts LG's home screen or Live TV over TV Home, it opens TV Home again, and the same for an
 app the TV reopens by itself in the first 5 seconds (e.g. Netflix with *Last source*).
 An HDMI input (e.g. a console that woke the TV over HDMI-CEC), AirPlay, or an app you pick
