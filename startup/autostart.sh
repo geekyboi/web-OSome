@@ -40,17 +40,12 @@ open_home() {
   # On a wake, Start-up "Last source" usually opens TV Home itself: give it WAKE_WAIT seconds,
   # and only step in if something else is in front. Opening it as well strands LG's loading cover.
   if [ "$1" = wake ] && [ "$WAKE_WAIT" -gt 0 ]; then
-    airplay=0; i=0
-    while [ $i -lt "$WAKE_WAIT" ]; do   # note whether AirPlay woke the TV
-      sleep 1; i=$((i+1))
-      [ "$(foreground)" = airplay ] && airplay=1
-    done
+    sleep "$WAKE_WAIT"
     [ "$(cat "$STATEF" 2>/dev/null)" = Active ] || return   # switched off again
     fg=$(foreground)
-    if [ "$airplay" = 1 ]; then keep_airplay "$fg"; return; fi
     case "$fg" in
       "$APP") log "$APP in front after ${WAKE_WAIT}s, nothing to do"; return ;;
-      com.webos.app.hdmi*) log "woke on $fg, leaving it"; return ;;
+      com.webos.app.hdmi*|airplay) log "woke on $fg, leaving it"; return ;;
     esac
     log "${fg:-nothing} in front after ${WAKE_WAIT}s"
   fi
@@ -84,18 +79,6 @@ open_home() {
 foreground() {
   $LUNA -n 1 luna://com.webos.applicationManager/getForegroundAppInfo '{}' </dev/null 2>/dev/null |
     sed -n 's/.*"appId" *: *"\([^"]*\)".*/\1/p'
-}
-
-# AirPlay woke the TV, but "Last source" may open TV Home over it: bring AirPlay back once.
-keep_airplay() {
-  fg=$1; i=0
-  while [ "$fg" != "$APP" ] && [ $i -lt 5 ]; do sleep 1; i=$((i+1)); fg=$(foreground); done
-  if [ "$fg" = "$APP" ]; then
-    log "AirPlay woke the TV and $APP covered it: bringing AirPlay back"
-    $LUNA -n 1 luna://com.webos.applicationManager/launch '{"id":"airplay"}' </dev/null >/dev/null 2>&1
-  else
-    log "woke on airplay, leaving it"
-  fi
 }
 
 launch() {
