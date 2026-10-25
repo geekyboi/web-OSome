@@ -225,8 +225,9 @@ crash-protection flag once every start-up script has finished, so a script that 
 running would put the next start in failsafe mode. The watcher listens to the TV's
 power state, and when the TV comes back on from standby it opens TV Home straight
 away. For the next 10 seconds it checks what's on screen: if the TV's own start-up
-puts LG's home screen or Live TV over TV Home, it opens TV Home again. An app the TV
-reopens by itself in the first 5 seconds is closed first (e.g. Netflix with *Last source*).
+puts LG's home screen or Live TV over TV Home, it opens TV Home again, and the same for an
+app the TV reopens by itself in the first 5 seconds (e.g. Netflix with *Last source*). When
+you switch off from an app, it closes the app and opens TV Home, so the TV wakes on TV Home.
 An HDMI input (e.g. a console that woke the TV over HDMI-CEC) or an app you pick
 yourself after that is left alone. It doesn't do this when the screen comes back from *Screen Off* (e.g.
 music playing with the screen off) or the screen saver.

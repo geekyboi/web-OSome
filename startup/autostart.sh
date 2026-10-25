@@ -13,8 +13,8 @@ GUARD=10           # for this many seconds after opening, re-open TV Home if the
                    # own home screen or live TV takes over the screen (instead of waiting)
 SKIP_IF_HDMI=0     # 1 = don't open TV Home if the TV woke up on an HDMI input
                    #     (e.g. a console turned the TV on over HDMI-CEC)
-APP_GUARD=5        # for this many seconds, also close an app the TV reopened by itself
-                   # (Start-up "Last source" resumes e.g. Netflix) and open TV Home. 0 = off.
+APP_GUARD=5        # for this many seconds, also take the screen back from an app the TV
+                   # reopened by itself (Start-up "Last source" resumes e.g. Netflix). 0 = off.
                    # This also overrides switching on with an app button on the remote.
 
 LOG=/tmp/tvhome-autostart.log      # cleared when the TV restarts
@@ -56,7 +56,7 @@ open_home() {
       ""|com.webos.app.home|com.webos.app.livetv|com.webos.app.discovery|com.webos.app.lgchannels)
         log "${fg:-nothing} in front after ${i}s, opening again"; launch ;;
       com.webos.app.hdmi*) log "$fg in front after ${i}s, leaving it"; return ;;
-      *) if [ $i -le "$APP_GUARD" ]; then log "$fg reopened after ${i}s, closing it, opening again"; case "$fg" in com.webos.*|com.lge.*) ;; *) close "$fg" ;; esac; launch
+      *) if [ $i -le "$APP_GUARD" ]; then log "$fg reopened after ${i}s, opening again"; launch
          else log "$fg in front after ${i}s, leaving it"; return; fi ;;
     esac
   done
@@ -67,10 +67,23 @@ foreground() {
     sed -n 's/.*"appId" *: *"\([^"]*\)".*/\1/p'
 }
 
-# Close an app (and any loading screen it's drawing over TV Home). Not used on LG's own apps.
+# Close an app.
 close() {
   $LUNA -n 1 luna://com.webos.applicationManager/closeByAppId "{\"id\":\"$1\"}" </dev/null >/dev/null 2>&1 ||
     log "close $1 failed"
+}
+
+# The TV is switching off: if an app is in front, close it and open TV Home, so TV Home is
+# the last app and Start-up "Last source" opens it on wake (no other app's loading screen).
+# HDMI inputs and LG's own apps are left alone.
+leave_home() {
+  fg=$(foreground)
+  case "$fg" in
+    ""|"$APP"|com.webos.*|com.lge.*) return ;;
+  esac
+  log "$fg in front at switch-off, closing it"
+  close "$fg"
+  launch
 }
 
 launch() {
@@ -99,6 +112,9 @@ while true; do
     [ "$st" = "$last" ] && continue
     echo "$st" > "$STATEF"
     log "power: ${last:-start} -> $st"
+    if [ "$last" = "Active" ] && was_off "$st"; then
+      leave_home &
+    fi
     if [ "$st" = "Active" ] && was_off "$last"; then
       if [ -z "$last" ]; then sleep "$BOOT_DELAY"; else sleep "$WAKE_DELAY"; fi
       open_home &     # in the background, so power changes keep being read meanwhile
