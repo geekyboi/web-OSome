@@ -67,22 +67,11 @@ foreground() {
     sed -n 's/.*"appId" *: *"\([^"]*\)".*/\1/p'
 }
 
-# Close an app.
-close() {
-  $LUNA -n 1 luna://com.webos.applicationManager/closeByAppId "{\"id\":\"$1\"}" </dev/null >/dev/null 2>&1 ||
-    log "close $1 failed"
-}
-
-# The TV is switching off: if an app is in front, close it and open TV Home, so TV Home is
-# the last app and Start-up "Last source" opens it on wake (no other app's loading screen).
-# HDMI inputs and LG's own apps are left alone.
+# The power button was pressed: open TV Home straight away, before LG moves the app in front
+# out of the way (about 0.3 s), so TV Home is the last app and Start-up "Last source" opens
+# it on wake instead of resuming e.g. Netflix behind LG's loading cover.
 leave_home() {
-  fg=$(foreground)
-  case "$fg" in
-    ""|"$APP"|com.webos.*|com.lge.*) return ;;
-  esac
-  log "$fg in front at switch-off, closing it"
-  close "$fg"
+  log "switching off, opening $APP so it's the last app"
   launch
 }
 
@@ -106,15 +95,16 @@ while true; do
   # service is ready, or if it restarts), wait and subscribe again.
   $LUNA -i luna://com.webos.service.tvpower/power/getPowerState '{"subscribe":true}' 2>/dev/null |
   while read -r line; do
+    case "$line" in   # the power button, before the state changes
+      *'Request Power Off'*|*'Request Active Standby'*|*'Request Suspend'*)
+        [ "$(cat "$STATEF" 2>/dev/null)" = Active ] && leave_home & ;;
+    esac
     st=$(echo "$line" | sed -n 's/.*"state" *: *"\([^"]*\)".*/\1/p')
     [ -z "$st" ] && continue
     last=$(cat "$STATEF" 2>/dev/null)
     [ "$st" = "$last" ] && continue
     echo "$st" > "$STATEF"
     log "power: ${last:-start} -> $st"
-    if [ "$last" = "Active" ] && was_off "$st"; then
-      leave_home &
-    fi
     if [ "$st" = "Active" ] && was_off "$last"; then
       if [ -z "$last" ]; then sleep "$BOOT_DELAY"; else sleep "$WAKE_DELAY"; fi
       open_home &     # in the background, so power changes keep being read meanwhile
