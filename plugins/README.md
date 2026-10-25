@@ -13,7 +13,7 @@ the editor's Settings tab gains or loses that plugin's card. A plugin's settings
 when it's removed, so putting it back brings them back too.
 
 On the TV the folder is `/media/developer/apps/usr/palm/applications/net.local.tvhome/plugins/`.
-Reinstalling the app with `ares-install` replaces it with the one in your copy of `tvhome/`.
+Reinstalling the app with `ares-install` replaces it with the one in your copy of `web-osome/`.
 
 For a small starting point, see `example-plugins/hello` (a "Hello, world!" tile for the
 right-hand column). Copy it into `plugins/` to try it.
