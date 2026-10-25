@@ -42,6 +42,10 @@ function startLuna() {
     service.subscribe('luna://com.webos.service.tvpower/power/getPowerState', { subscribe: true })
       .on('response', function (m) { var st = m.payload && m.payload.state; if (st) { power.powerChanged(st); } });
   } catch (e) { log('power state not available', e.message); }
+  try {
+    service.subscribe('luna://com.webos.applicationManager/getForegroundAppInfo', { subscribe: true })
+      .on('response', function (m) { power.foregroundChanged(m.payload && m.payload.appId, 'net.local.tvhome'); });
+  } catch (e) { log('foreground app not available', e.message); }
   // Volume and mute keys go to the system UI, not the TV app, so pass them on (activity)
   // to undim it. The first reply (no cause) is just the current volume.
   try {

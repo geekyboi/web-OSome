@@ -110,12 +110,12 @@ module.exports = {
   },
   start: function (api) {
     api.topic('events', function () { return { returnValue: true, events: [] }; });
-    api.every(15 * 60 * 1000, refresh);      // paused while the TV is off
+    api.every(15 * 60 * 1000, refresh);      // paused while the TV is off or another app is in front
     api.after(1000, refresh);
     function refresh() { /* ... */ api.publish('events'); }
     return {
       settingsChanged: function () { },     // the settings, Home Assistant address or token changed
-      powerOn: function () { },             // the TV came back on: catch up
+      powerOn: function () { },             // TV Home is back in front: catch up
       stop: function () { }                 // removed or changed: tidy up
     };
   }

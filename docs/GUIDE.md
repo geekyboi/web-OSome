@@ -321,9 +321,9 @@ Settings goes back to the `config.js` sections.
 - After 10 wrong passwords from one device, sign-in pauses for 10 minutes.
 - If the editor says it's waiting for the TV, open TV Home on the TV once.
 - The service's log is `/tmp/tvhome-service.log`.
-- While the TV is off or in standby, the service stops checking the calendar, weather and
-  bins, and catches up as soon as the TV is switched on. TV Home itself pauses its clock and
-  Home Assistant checks while another app is in front.
+- While the TV is off or in standby, or another app or input is in front, the service stops
+  checking the calendar, weather and bins, and catches up as soon as TV Home is back. TV Home
+  itself pauses its clock and Home Assistant checks while another app is in front.
 
 
 ## 6b. Plugins: adding and removing tiles
