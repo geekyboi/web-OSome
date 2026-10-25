@@ -225,13 +225,15 @@ crash-protection flag once every start-up script has finished, so a script that 
 running would put the next start in failsafe mode. The watcher listens to the TV's
 power state, and when the TV comes back on from standby it opens TV Home straight
 away. For the next 10 seconds it checks what's on screen: if the TV's own start-up
-puts LG's home screen or Live TV over TV Home, it opens TV Home again. An HDMI input
-(e.g. a console that woke the TV over HDMI-CEC) or an app you pick yourself is left
-alone. It doesn't do this when the screen comes back from *Screen Off* (e.g.
+puts LG's home screen or Live TV over TV Home, it opens TV Home again, and the same for
+an app the TV reopens by itself in the first 5 seconds (e.g. Netflix with *Last source*).
+An HDMI input (e.g. a console that woke the TV over HDMI-CEC) or an app you pick
+yourself after that is left alone. It doesn't do this when the screen comes back from *Screen Off* (e.g.
 music playing with the screen off) or the screen saver.
 
 - **Settings** are at the top of `startup/autostart.sh`: the delays (0 by default),
-  `GUARD` (how long it keeps checking after opening), and
+  `GUARD` (how long it keeps checking after opening), `APP_GUARD` (how long it takes
+  the screen back from apps; this also overrides an app button used to switch on), and
   `SKIP_IF_HDMI=1` if a console that switches the TV on over HDMI-CEC should keep
   its input rather than being covered by TV Home.
 - **Check it's working:** `cat /tmp/tvhome-autostart.log` shows each power change

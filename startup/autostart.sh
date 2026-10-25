@@ -13,6 +13,9 @@ GUARD=10           # for this many seconds after opening, re-open TV Home if the
                    # own home screen or live TV takes over the screen (instead of waiting)
 SKIP_IF_HDMI=0     # 1 = don't open TV Home if the TV woke up on an HDMI input
                    #     (e.g. a console turned the TV on over HDMI-CEC)
+APP_GUARD=5        # for this many seconds, also take the screen back from an app the TV
+                   # reopened by itself (Start-up "Last source" resumes e.g. Netflix). 0 = off.
+                   # This also overrides switching on with an app button on the remote.
 
 LOG=/tmp/tvhome-autostart.log      # cleared when the TV restarts
 PIDF=/tmp/tvhome-autostart.pid
@@ -41,7 +44,8 @@ open_home() {
   launch
   # Rather than waiting a fixed time for the TV's own start-up to finish, open straight
   # away and take the screen back if the TV's home screen or live TV covers TV Home.
-  # Anything else (an app you picked, an HDMI input) is left alone.
+  # So is an app the TV reopened itself in the first APP_GUARD seconds. HDMI inputs and
+  # anything later (an app you picked) are left alone.
   i=0
   while [ $i -lt "$GUARD" ]; do
     sleep 1; i=$((i+1))
@@ -51,7 +55,9 @@ open_home() {
       "$APP") ;;
       ""|com.webos.app.home|com.webos.app.livetv|com.webos.app.discovery|com.webos.app.lgchannels)
         log "${fg:-nothing} in front after ${i}s, opening again"; launch ;;
-      *) log "$fg in front after ${i}s, leaving it"; return ;;
+      com.webos.app.hdmi*) log "$fg in front after ${i}s, leaving it"; return ;;
+      *) if [ $i -le "$APP_GUARD" ]; then log "$fg reopened after ${i}s, opening again"; launch
+         else log "$fg in front after ${i}s, leaving it"; return; fi ;;
     esac
   done
 }
