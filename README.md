@@ -65,6 +65,18 @@ editor and saved **on the TV**, so none of it ends up in this repo.
 There's a lot more detail (the Home button, calendars, bins, backgrounds...) in
 [docs/GUIDE.md](docs/GUIDE.md).
 
+## Plugins
+
+Every tile around the dock (clock, weather, calendar, bins, now playing, greeting) is a
+folder in `plugins/`. Delete a folder to remove its tile; put it back to bring it back
+(its settings are kept). The app picks up changes within 30 seconds, no rebuild needed.
+
+To try the example, copy `example-plugins/hello` into `plugins/`. A "Hello, world!" card
+appears in the right-hand column.
+
+On the TV the folder is `/media/developer/apps/usr/palm/applications/net.local.tvhome/plugins/`.
+How to write your own: [plugins/README.md](plugins/README.md).
+
 ## Finding your way around
 
 | Where | What |
