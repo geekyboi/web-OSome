@@ -226,7 +226,8 @@ running would put the next start in failsafe mode. The watcher listens to the TV
 power state, and when the TV comes back on from standby it opens TV Home (straight
 away after a full start; after a wake it first gives *Last source* 3 seconds to do it, see
 `WAKE_WAIT`). If AirPlay woke the TV and *Last source* covers it with TV Home, AirPlay is
-brought back, and a stuck white LG loading screen is cleared after 6 seconds (`COVER_CLEAR`). For the next 10 seconds it checks what's on screen: if the TV's own start-up
+brought back. Don't call `closeAllSystemUI` to clear LG's white loading cover: on the
+OLED55A2 it made the TV restart and switch off. For the next 10 seconds it checks what's on screen: if the TV's own start-up
 puts LG's home screen or Live TV over TV Home, it opens TV Home again, and the same for an
 app the TV reopens by itself in the first 5 seconds (e.g. Netflix with *Last source*).
 An HDMI input (e.g. a console that woke the TV over HDMI-CEC), AirPlay, or an app you pick
