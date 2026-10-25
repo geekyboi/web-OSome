@@ -138,6 +138,10 @@ function follow() {
   lunaSub(SVC + 'getPlugins', {}, function (r) {
     if (r && r.returnValue !== false && r.plugins) { setPlugins(r.plugins); }
   });
+  // volume / mute keys: the system UI takes them, so keydown never sees them
+  lunaSub(SVC + 'activity', {}, function (r) {
+    if (r && r.cause) { wake(); }
+  });
   svc.following = true;
   pluginsServiceReady();
 }
