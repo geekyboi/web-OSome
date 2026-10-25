@@ -1,6 +1,6 @@
 # web-OSome
 
-A home screen for my LG TV that isn't full of crap I don't want.
+A lovely AI slop home screen for my LG TV that isn't full of crap I don't want.
 
 ![The home screen](docs/screenshot.jpg)
 
