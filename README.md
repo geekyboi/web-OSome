@@ -31,6 +31,13 @@ python3 -m http.server 8000
 Open http://localhost:8000. Arrow keys, Enter and the mouse work. Tiles say what they
 *would* launch instead of launching.
 
+## Before you start: root the TV (optional, but worth it)
+
+The basics work on a normal TV in Developer Mode, but the good bits (phone editor, real
+app icons, taking over the Home button, no Developer Mode timer) need a rooted TV with
+the Homebrew Channel installed. webOS Brew's [rooting guide](https://www.webosbrew.org/rooting/)
+tells you which method works for your TV and firmware, so follow that rather than me.
+
 ## Put it on the TV
 
 You need the TV in Developer Mode and LG's `ares` tools
