@@ -123,7 +123,7 @@ BEGIN {
 SAMPLEHEAD='time,uptime,power,front,mem_total_kb,mem_avail_kb,mem_free_kb,cached_kb,swap_used_kb,cpu_busy_pct,iowait_pct,load1,apps_running,tvhome_rss_kb,tvhome_cpu_pct,svc_rss_kb,svc_cpu_pct,lghome_rss_kb,lghome_cpu_pct,wam_rss_kb,wam_cpu_pct'
 # Take a sample and add it to samples.csv.
 sample() {
-  [ -n "$SVCPID" ] && [ -d "/proc/$SVCPID" ] || SVCPID=$(pgrep -f 'services/net.local.tvhome.service' | head -n 1)
+  [ -n "$SVCPID" ] && [ -d "/proc/$SVCPID" ] || SVCPID=$(pgrep -f '^net\.local\.tvhome\.service' | head -n 1)
   [ -n "$WAMPID" ] && [ -d "/proc/$WAMPID" ] || WAMPID=$(pgrep -o WebAppMgr 2>/dev/null)
   $LUNA -n 1 luna://com.webos.applicationManager/running '{}' < /dev/null > "$RUN/running" 2>/dev/null
   power=; front=
