@@ -161,10 +161,11 @@ top20() {
         DONE[b] = 1; print ts "," up "," PID[b] "," NAME[b] "," RSS[b] "," TK[b]
       }
     }' | while read -r l; do
-      # WebAppMgr's processes all share a name: add their type (zygote, renderer...) from the command line
+      # WebAppMgr's processes all share a name: add their type (zygote, renderer...) from the
+      # command line (WebAppMgr rewrites it as one space-separated string, so match within it)
       case "$l" in *,WebAppMgr,*)
         pid=${l#*,*,}; pid=${pid%%,*}
-        t=$(tr '\0' '\n' < "/proc/$pid/cmdline" 2>/dev/null | sed -n 's/^--type=//p' | head -n 1)
+        t=$(tr '\0' ' ' < "/proc/$pid/cmdline" 2>/dev/null | sed -n 's/.*--type=\([^ ]*\).*/\1/p')
         l=$(echo "$l" | sed "s/,WebAppMgr,/,WebAppMgr(${t:-main}),/") ;;
       esac
       csv top 'time,uptime,pid,name,rss_kb,cpu_ticks' "$l"
