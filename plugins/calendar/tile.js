@@ -5,6 +5,7 @@
   'use strict';
   var api = null;
   var agenda = null;        // { configured, events, error } from the service
+  var shown = null;         // the events on screen, by title and start (to spot new ones)
   function pad(n) { return n < 10 ? '0' + n : '' + n; }
   var WD = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
   var MO = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -33,7 +34,7 @@
   function count() { return api.settings().count || 3; }
   function renderAgenda() {
     var box = api.root, list = api.$('events'), esc = api.util.esc;
-    if (!agenda || !agenda.configured) { api.show(false); return; }
+    if (!agenda || !agenda.configured) { shown = null; api.show(false); return; }
     var now = new Date(), html = '';
     var evs = (agenda.events || []).filter(function (e) { return e.end > now.getTime(); });   // drop ones that just finished
     evs = evs.slice(0, count());
@@ -48,7 +49,15 @@
       });
     }
     var changed = list.innerHTML !== html;
-    if (changed) { list.innerHTML = html; }
+    if (changed) {
+      list.innerHTML = html;
+      // events that weren't there before fade up (not when the panel itself is just appearing)
+      var keys = evs.map(function (e) { return e.title + '|' + e.start; });
+      if (shown && box.classList.contains('show')) {
+        keys.forEach(function (k, i) { if (shown.indexOf(k) < 0) { api.animateIn(list.children[i]); } });
+      }
+      shown = keys;
+    }
     if (!api.show(true) && changed) { api.layout(); }
   }
 

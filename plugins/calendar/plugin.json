@@ -1,6 +1,6 @@
 {
   "name": "Calendar",
   "description": "The next few events from a shared calendar (e.g. an iCloud Public Calendar), in a glass panel on the right.",
-  "version": "1.0.0",
-  "order": 20
+  "version": "1.0.1",
+  "order": 30
 }

@@ -1,6 +1,6 @@
 {
   "name": "Now playing",
   "description": "What a Yamaha MusicCast amplifier is playing, with the artwork, in a glass card on the right.",
-  "version": "1.0.0",
-  "order": 30
+  "version": "1.0.1",
+  "order": 20
 }

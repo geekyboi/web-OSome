@@ -43,6 +43,18 @@ html, body {
   border-radius: inherit;
 }
 
+/* ---------- plugin tiles coming, going and changing (js/core/plugins.js) ----------
+   one-off transitions of opacity and transform only, so the GPU does them */
+#shift .plugin.enter { animation: tile-enter 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+#shift .plugin.leaving {
+  opacity: 0;
+  transform: scale(0.96);
+  transition: opacity 0.35s ease, transform 0.35s ease;
+}
+@keyframes tile-enter { from { opacity: 0; transform: translateY(18px) scale(0.97); } to { opacity: 1; transform: none; } }
+#shift .plugin .fresh { animation: tile-fresh 0.5s ease both; }
+@keyframes tile-fresh { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
 /* ---------- status capsule ---------- */
 #status {
   position: absolute;

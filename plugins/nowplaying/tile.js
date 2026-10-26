@@ -1,10 +1,10 @@
 /* Now playing plugin: what the amplifier is playing (Yamaha MusicCast, read by this plugin's
    service.js). Asked every 3 s while the home screen is showing (8 s when nothing is playing).
-   A glass card at the bottom of the right-hand column. */
+   A glass card in the right-hand column, above the calendar. */
 (function () {
   'use strict';
   var api = null;
-  var np = null, npAt = 0, npTimer = null, npArt = '';
+  var np = null, npAt = 0, npTimer = null, npArt = '', npSong = '';
   function pad(n) { return n < 10 ? '0' + n : '' + n; }
   function npShowing(n) {
     return !!(n && n.power === 'on' && n.source !== 'other' && n.playback !== 'stop' && (n.track || n.artist));
@@ -26,8 +26,12 @@
   function mmss(t) { t = Math.max(0, Math.floor(t)); return Math.floor(t / 60) + ':' + pad(t % 60); }
   function renderNow() {
     var box = api.root;
-    if (!npShowing(np)) { api.show(false); return; }
+    if (!npShowing(np)) { npSong = ''; api.show(false); return; }
     var paused = np.playback === 'pause';
+    // a new song while the card is up: its text fades up
+    var song = [np.track, np.artist, np.album].join('|');
+    if (song !== npSong && npSong && box.classList.contains('show')) { api.animateIn(box.querySelector('.nptext')); }
+    npSong = song;
     var src = np.inputName || '';
     if (paused) { src += (src ? ' · ' : '') + 'Paused'; }
     setText('npsrc', src);
@@ -46,7 +50,7 @@
         (function next(i) {
           if (i >= tries.length || npArt !== want) { return; }
           var pre = new Image();
-          pre.onload = function () { if (npArt === want) { img.src = tries[i]; box.classList.add('hasart'); } };
+          pre.onload = function () { if (npArt === want) { img.src = tries[i]; box.classList.add('hasart'); api.animateIn(img); } };
           pre.onerror = function () { next(i + 1); };
           pre.src = tries[i];
         })(0);
