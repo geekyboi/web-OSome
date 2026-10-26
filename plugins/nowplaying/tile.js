@@ -1,6 +1,7 @@
 /* Now playing plugin: what the amplifier is playing (Yamaha MusicCast, read by this plugin's
    service.js). Asked every 3 s while the home screen is showing (8 s when nothing is playing).
-   A glass card in the right-hand column, above the calendar. */
+   A glass card in the right-hand column, above the calendar. Right from the last app of a row
+   selects it, and OK plays or pauses (streaming, USB, Bluetooth and CD; not the radio). */
 (function () {
   'use strict';
   var api = null;
@@ -39,6 +40,7 @@
     setText('npartist', np.track ? [np.artist, np.album].filter(Boolean).join(' — ') : '');
     box.classList.toggle('paused', paused);
     box.classList.toggle('radio', np.source === 'tuner' || !np.totalTime || np.playTime == null);
+    box.classList.toggle('nocontrol', !canControl());
     if (np.art !== npArt) {
       npArt = np.art;
       var img = api.$('npimg');
@@ -74,6 +76,26 @@
     }
   }
 
+  // Can the amp play and pause what's on? (The radio can't.)
+  function canControl() { return npShowing(np) && (np.source === 'netusb' || np.source === 'cd') && api.service.ready(); }
+  // OK on the tile: play or pause. The icon swaps straight away, then the amp is asked again to confirm.
+  function playPause() {
+    if (!canControl()) { return; }
+    var want = np.playback === 'pause' ? 'play' : 'pause';
+    np.playback = want;
+    renderNow();
+    var btn = api.root.querySelector('.npbtn');
+    btn.classList.remove('fire'); void btn.offsetWidth; btn.classList.add('fire');
+    clearTimeout(btn.fireTimer);
+    btn.fireTimer = setTimeout(function () { btn.classList.remove('fire'); }, 450);
+    api.service.call('playback', { playback: want }, function (r) {
+      if (!api) { return; }
+      if (!r || r.returnValue === false) { api.toast((r && r.errorText) || 'The amplifier didn’t answer.', true); }
+      clearTimeout(npTimer);
+      npTimer = setTimeout(pollNow, 800);          // what the amp says now (or put it back)
+    }, 6000);
+  }
+
   TVHOME.plugin({
     id: 'nowplaying',
     region: 'right',
@@ -90,6 +112,11 @@
         '<div class="nptrack" id="nptrack"></div>' +
         '<div class="npartist" id="npartist"></div>' +
         '<div class="npbar" id="npbar"><i id="npfill"></i></div>' +
+      '</div>' +
+      // play/pause: only shows while the card has the focus
+      '<div class="npbtn" role="button" aria-label="Play or pause"><span class="sheen"></span>' +
+        '<svg class="ic-pause" viewBox="0 0 24 24" width="34" height="34" fill="currentColor" aria-hidden="true"><rect x="6" y="4.5" width="4" height="15" rx="1.2"></rect><rect x="14" y="4.5" width="4" height="15" rx="1.2"></rect></svg>' +
+        '<svg class="ic-play" viewBox="0 0 24 24" width="36" height="36" fill="currentColor" aria-hidden="true"><path d="M8 4.8v14.4a1 1 0 0 0 1.5.86l11.3-7.2a1 1 0 0 0 0-1.72L9.5 3.94A1 1 0 0 0 8 4.8z"></path></svg>' +
       '</div>',
 
     // the setting saved before plugins (musiccastHost)
@@ -100,6 +127,8 @@
     onReady: function () { pollNow(); },          // the service has just connected
     onShow: function () { pollNow(); },           // back on screen: ask straight away
     onSettings: function () { pollNow(); },
-    onSecond: function () { updateNpBar(); }
+    onSecond: function () { updateNpBar(); },
+    canFocus: function () { return canControl(); },   // the radio: nothing to select
+    onOk: function () { playPause(); }
   });
 })();

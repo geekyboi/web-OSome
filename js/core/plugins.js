@@ -77,11 +77,13 @@ function makeApi(p) {
         root.classList.remove('leaving');
         if (!leaving) { root.classList.add('show'); tileFlash(root, 'enter', TILE_IN); }
       } else if (tilesAnimate()) {
+        if (tileFocus === p) { setTileFocus(null); }   // the focus goes back to the app it came from
         // fade out first, then close the gap
         root.classList.add('leaving');
         p.fadeTimer = setTimeout(function () { root.classList.remove('show', 'leaving'); layoutRegion(p.region); }, TILE_OUT);
         return true;
       } else {
+        if (tileFocus === p) { setTileFocus(null); }
         root.classList.remove('show');
       }
       layoutRegion(p.region);
@@ -117,6 +119,11 @@ function mountPlugin(p) {
   var host = p.region === 'status' ? $('status') : $('shift');
   host.insertBefore(root, after ? after.root : (p.region === 'status' ? null : $('gear')));
   p.state = 'on';
+  if (typeof d.onOk === 'function') {
+    // Magic Remote pointer: hover selects the tile, click is OK
+    onHover(root, function () { if (focusablePlugins().indexOf(p) >= 0) { setTileFocus(p); } });
+    root.addEventListener('click', function () { if (focusablePlugins().indexOf(p) >= 0) { setTileFocus(p); okTile(p); } });
+  }
   p.api = d.api = makeApi(p);
   pluginCall(p, 'start', [p.api]);
   var now = new Date();
@@ -131,6 +138,7 @@ function unloadPlugin(id) {
   var p = plugins[id];
   if (!p) { return; }
   delete plugins[id];
+  if (tileFocus === p) { setTileFocus(null); }
   if (p.state === 'on') { pluginCall(p, 'stop'); }
   clearTimeout(p.fadeTimer);
   p.state = 'off';
