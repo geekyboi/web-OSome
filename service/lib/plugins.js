@@ -106,7 +106,7 @@ function pluginApi(id, rec) {
     // HTTP for the editor: /api/p/<id>/<path> (signed in). local: true also serves it to the TV
     // itself at /p/<id>/<path> (e.g. pictures the TV app shows). fn(req, res, query, rest)
     route: function (verb, sub, fn, opts) { rec.routes.push({ verb: verb, sub: sub, fn: fn, local: !!(opts && opts.local) }); },
-    every: function (ms, fn) { return track(setInterval(power.whileOn(safe(id, fn)), ms)); },   // paused while the TV is off
+    every: function (ms, fn) { return track(setInterval(power.whileOn(safe(id, fn)), ms)); },   // paused while the TV is off or another app is in front
     after: function (ms, fn) { return track(setTimeout(safe(id, fn), ms)); },
     readBody: web.readBody,
     readJson: function (req, limit, cb) {

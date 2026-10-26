@@ -7,6 +7,7 @@
   "title": "TV Home",
   "icon": "icon.png",
   "largeIcon": "largeIcon.png",
+  "supportGIP": true,
   "noSplashOnLaunch": true,
   "spinnerOnLaunch": false,
   "resolution": "1920x1080",

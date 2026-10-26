@@ -38,7 +38,7 @@ Everything works without the service, with fewer features: the app falls back to
 | `js/bgdraw.js`, `js/qr.js` | Background drawing, and a QR code generator. |
 | `plugins/<id>/` | The tiles around the dock: clock, greeting, weather, calendar, bins, nowplaying. |
 | `example-plugins/hello/` | The smallest working plugin. Not loaded; copy it into `plugins/` to try it. |
-| `service/service.js`, `service/lib/` | The service: `http` (editor and API), `auth` (password, cookies), `layout`, `plugins`, `luna`, `power` (pauses while the TV is off), `homeassistant`. |
+| `service/service.js`, `service/lib/` | The service: `http` (editor and API), `auth` (password, cookies), `layout`, `plugins`, `luna`, `power` (pauses while the TV is off or another app is in front), `homeassistant`. |
 | `service/web/editor/` | The phone editor, one file per part. |
 | `startup/` | Shell scripts that open the app at power-on on rooted TVs (Homebrew Channel `init.d` hook). |
 | `home-assistant/` | Example automations, and an optional extra-apps list kept in Home Assistant. |
@@ -63,7 +63,7 @@ All files are optional:
 - `tile.js` and `tile.css`: the tile on the home screen. It calls `TVHOME.plugin({ id, region, html, start, onMinute, ... })`.
   `region` is `'status'` (the clock capsule), `'right'` (the right-hand column) or `'stage'` (placed by its own CSS).
 - `service.js`: runs inside the service (Node). It publishes data with `api.topic` and `api.publish`,
-  and uses `api.every` and `api.after` for timers, which pause while the TV is off.
+  and uses `api.every` and `api.after` for timers, which pause while the TV is off or another app is in front.
 - `editor.js` and `editor.css`: its settings card in the phone editor (`TVHOME_EDITOR.plugin({ id, card })`).
 
 The service rescans `plugins/` every 30 seconds. Adding or deleting a folder is all it
@@ -158,7 +158,7 @@ Reinstalling replaces the app folder on the TV, so files added there by hand (li
 - **Keep CPU and RAM low.** That's the reason the project exists.
   - Hook into the existing once-a-second tick (`onSecond`/`onMinute`) rather than adding `setInterval`s.
   - Stop timers in `stop()`, and pause work while TV Home isn't in front (`onShow` tells you it's back).
-  - In the service, use `api.every` so polling stops while the TV is off.
+  - In the service, use `api.every` so polling stops while the TV is off or another app is in front.
   - Avoid always-running CSS animations, large images and re-rendering the whole dock.
 - **No private data in commits.** Don't commit IP addresses, Home Assistant URLs or tokens,
   webhook ids, calendar links, passwords, `launchpoints.json`, `.ipk` files or personal

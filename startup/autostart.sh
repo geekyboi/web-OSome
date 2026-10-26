@@ -13,6 +13,11 @@ GUARD=10           # for this many seconds after opening, re-open TV Home if the
                    # own home screen or live TV takes over the screen (instead of waiting)
 SKIP_IF_HDMI=0     # 1 = don't open TV Home if the TV woke up on an HDMI input
                    #     (e.g. a console turned the TV on over HDMI-CEC)
+APP_GUARD=5        # for this many seconds, also take the screen back from an app the TV
+                   # reopened by itself (Start-up "Last source" resumes e.g. Netflix). 0 = off.
+                   # This also overrides switching on with an app button on the remote.
+WAKE_WAIT=3        # on a wake from standby, wait this long for "Last source" to open TV Home
+                   # before stepping in. 0 = open straight away (for Home Auto Launch).
 
 LOG=/tmp/tvhome-autostart.log      # cleared when the TV restarts
 PIDF=/tmp/tvhome-autostart.pid
@@ -32,6 +37,18 @@ echo $$ > "$PIDF"
 log "started (pid $$)"
 
 open_home() {
+  # On a wake, Start-up "Last source" usually opens TV Home itself: give it WAKE_WAIT seconds,
+  # and only step in if something else is in front. Opening it as well strands LG's loading cover.
+  if [ "$1" = wake ] && [ "$WAKE_WAIT" -gt 0 ]; then
+    sleep "$WAKE_WAIT"
+    [ "$(cat "$STATEF" 2>/dev/null)" = Active ] || return   # switched off again
+    fg=$(foreground)
+    case "$fg" in
+      "$APP") log "$APP in front after ${WAKE_WAIT}s, nothing to do"; return ;;
+      com.webos.app.hdmi*|airplay) log "woke on $fg, leaving it"; return ;;
+    esac
+    log "${fg:-nothing} in front after ${WAKE_WAIT}s"
+  fi
   if [ "$SKIP_IF_HDMI" = 1 ]; then
     fg=$(foreground)
     case "$fg" in
@@ -41,7 +58,8 @@ open_home() {
   launch
   # Rather than waiting a fixed time for the TV's own start-up to finish, open straight
   # away and take the screen back if the TV's home screen or live TV covers TV Home.
-  # Anything else (an app you picked, an HDMI input) is left alone.
+  # So is an app the TV reopened itself in the first APP_GUARD seconds. HDMI inputs and
+  # anything later (an app you picked) are left alone.
   i=0
   while [ $i -lt "$GUARD" ]; do
     sleep 1; i=$((i+1))
@@ -51,7 +69,9 @@ open_home() {
       "$APP") ;;
       ""|com.webos.app.home|com.webos.app.livetv|com.webos.app.discovery|com.webos.app.lgchannels)
         log "${fg:-nothing} in front after ${i}s, opening again"; launch ;;
-      *) log "$fg in front after ${i}s, leaving it"; return ;;
+      com.webos.app.hdmi*|airplay) log "$fg in front after ${i}s, leaving it"; return ;;   # inputs, and AirPlay waking the TV
+      *) if [ $i -le "$APP_GUARD" ]; then log "$fg reopened after ${i}s, opening again"; launch
+         else log "$fg in front after ${i}s, leaving it"; return; fi ;;
     esac
   done
 }
@@ -89,7 +109,7 @@ while true; do
     log "power: ${last:-start} -> $st"
     if [ "$st" = "Active" ] && was_off "$last"; then
       if [ -z "$last" ]; then sleep "$BOOT_DELAY"; else sleep "$WAKE_DELAY"; fi
-      open_home &     # in the background, so power changes keep being read meanwhile
+      if [ -z "$last" ]; then open_home boot & else open_home wake & fi   # in the background, so power changes keep being read meanwhile
     fi
   done
   sleep 5

@@ -223,15 +223,20 @@ At start-up the Homebrew Channel runs it, and it starts `startup/autostart.sh` i
 background, then exits immediately. That matters: the Homebrew Channel only clears its
 crash-protection flag once every start-up script has finished, so a script that kept
 running would put the next start in failsafe mode. The watcher listens to the TV's
-power state, and when the TV comes back on from standby it opens TV Home straight
-away. For the next 10 seconds it checks what's on screen: if the TV's own start-up
-puts LG's home screen or Live TV over TV Home, it opens TV Home again. An HDMI input
-(e.g. a console that woke the TV over HDMI-CEC) or an app you pick yourself is left
-alone. It doesn't do this when the screen comes back from *Screen Off* (e.g.
+power state, and when the TV comes back on from standby it opens TV Home (straight
+away after a full start; after a wake it first gives *Last source* 3 seconds to do it, see
+`WAKE_WAIT`). AirPlay to a TV that's off wakes it on TV Home (*Last source* opens TV Home over AirPlay and
+the stream drops), so AirPlay again once it's on. Don't call `closeAllSystemUI` to clear LG's white loading cover: on the
+OLED55A2 it made the TV restart and switch off. For the next 10 seconds it checks what's on screen: if the TV's own start-up
+puts LG's home screen or Live TV over TV Home, it opens TV Home again, and the same for an
+app the TV reopens by itself in the first 5 seconds (e.g. Netflix with *Last source*).
+An HDMI input (e.g. a console that woke the TV over HDMI-CEC), AirPlay, or an app you pick
+yourself after that is left alone. It doesn't do this when the screen comes back from *Screen Off* (e.g.
 music playing with the screen off) or the screen saver.
 
 - **Settings** are at the top of `startup/autostart.sh`: the delays (0 by default),
-  `GUARD` (how long it keeps checking after opening), and
+  `GUARD` (how long it keeps checking after opening), `APP_GUARD` (how long it takes
+  the screen back from apps; this also overrides an app button used to switch on), and
   `SKIP_IF_HDMI=1` if a console that switches the TV on over HDMI-CEC should keep
   its input rather than being covered by TV Home.
 - **Check it's working:** `cat /tmp/tvhome-autostart.log` shows each power change
@@ -241,6 +246,17 @@ music playing with the screen off) or the screen saver.
   app's folder and does nothing if the app has been removed.
 - If you used the Home Assistant automation below, turn it off so the two don't
   both open the app.
+
+### Faster: TV Home as an input
+
+TV Home adds itself to the TV's list of inputs the first time it opens. Set the TV's
+start-up to **Last source** (instead of *Home Auto Launch*) and, if TV Home was in front
+when you switched off, the TV opens it directly without LG's home first. Keep the
+startup script too: it covers switching off from another app.
+
+Anything else that restarts LG's screen manager (`surface-manager`) at start-up will
+crash TV Home, and the TV switches itself off after a crash. Don't restart it from an
+`init.d` script.
 
 ### Without root: Home Assistant automation
 
@@ -321,9 +337,9 @@ Settings goes back to the `config.js` sections.
 - After 10 wrong passwords from one device, sign-in pauses for 10 minutes.
 - If the editor says it's waiting for the TV, open TV Home on the TV once.
 - The service's log is `/tmp/tvhome-service.log`.
-- While the TV is off or in standby, the service stops checking the calendar, weather and
-  bins, and catches up as soon as the TV is switched on. TV Home itself pauses its clock and
-  Home Assistant checks while another app is in front.
+- While the TV is off or in standby, or another app or input is in front, the service stops
+  checking the calendar, weather and bins, and catches up as soon as TV Home is back. TV Home
+  itself pauses its clock and Home Assistant checks while another app is in front.
 
 
 ## 6b. Plugins: adding and removing tiles
