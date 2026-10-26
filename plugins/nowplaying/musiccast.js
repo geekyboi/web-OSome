@@ -1,5 +1,5 @@
 /* Yamaha MusicCast: what the amplifier is playing, from its local HTTP API
-   (http://<amp>/YamahaExtendedControl/v1/...). Read-only; main zone. */
+   (http://<amp>/YamahaExtendedControl/v1/...), and play/pause. Main zone. */
 var http = require('http');
 
 var BASE = '/YamahaExtendedControl/v1/';
@@ -137,6 +137,14 @@ function pipeArt(host, rel, res) {
   req.setTimeout(5000, function () { req.abort(); });
 }
 
+// Play or pause (playback 'play' or 'pause') what the amp is playing: source 'netusb' or 'cd'.
+function setPlayback(host, source, playback, cb) {
+  host = cleanHost(host);
+  if (!host) { cb(new Error('Enter the amplifier’s IP address.')); return; }
+  if (!/^(play|pause)$/.test(playback) || !/^(netusb|cd)$/.test(source)) { cb(new Error('Can’t do that.')); return; }
+  get(host, source + '/setPlayback?playback=' + playback, function (err) { cb(err || null); });
+}
+
 function deviceInfo(host, cb) {
   host = cleanHost(host);
   if (!host) { cb(new Error('Enter the amplifier’s IP address.')); return; }
@@ -146,4 +154,4 @@ function deviceInfo(host, cb) {
   });
 }
 
-module.exports = { cleanHost: cleanHost, nowPlaying: nowPlaying, deviceInfo: deviceInfo, pipeArt: pipeArt };
+module.exports = { cleanHost: cleanHost, nowPlaying: nowPlaying, setPlayback: setPlayback, deviceInfo: deviceInfo, pipeArt: pipeArt };

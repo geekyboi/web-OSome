@@ -74,6 +74,9 @@ TVHOME.plugin({
   onShow: function () { },     // TV Home came back to the front
   onReady: function () { },    // the service has connected
   onSettings: function () { }, // the settings changed (web editor)
+  onOk: function () { },       // 'right' only: the tile can be selected (Right from the last app of a row), and OK was pressed
+  canFocus: function () { return true; },  // with onOk: can it be selected just now?
+  onFocus: function (on) { },  // with onOk: it was selected (class focus) or left
   shrink: function () { return false; },   // 'right' only: the column is too full, take less room (true if it did)
   unshrink: function () { },
   migrate: function (oldSettings) { return null; }   // settings from before plugins, if any

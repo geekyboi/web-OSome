@@ -188,8 +188,9 @@ function select(ci, ti) {
   // Already selected (e.g. the pointer resting on it): leave it alone. Re-selecting would
   // briefly shrink the icon, its edge would slip out from under the pointer and back in,
   // and the selection animation would loop.
-  if (ci === cur.c && ti === cur.i && !onGear) { return; }
+  if (ci === cur.c && ti === cur.i && !onGear && !tileFocus) { return; }
   setGear(false);
+  setTileFocus(null);
 
   var prev = cats[cur.c];
   if (prev) {
@@ -212,6 +213,7 @@ function move(key) {
   var cat = cats[cur.c];
   if (key === KEY.LEFT && cur.i > 0) { select(cur.c, cur.i - 1); }
   else if (key === KEY.RIGHT && cur.i < cat.discs.length - 1) { select(cur.c, cur.i + 1); }
+  else if (key === KEY.RIGHT) { focusPluginTile(0); }   // past the last app: the tiles on the right
   else if (key === KEY.UP && cur.c > 0) { select(cur.c - 1, 0); }
   else if (key === KEY.UP && cur.c <= 0) { setGear(true); }
   else if (key === KEY.DOWN && cur.c < cats.length - 1) { select(cur.c + 1, 0); }
@@ -256,11 +258,61 @@ var onGear = false;
 // Move the focus onto the settings button (on = true) or back to the tiles.
 function setGear(on) {
   onGear = !!on;
+  if (onGear) { setTileFocus(null); }
   var g = $('gear');
   if (g) { g.classList.toggle('focus', onGear); }
   var d = cats[cur.c] && cats[cur.c].discs[cur.i];
-  if (d) { d.node.classList.toggle('focus', !onGear); }
+  if (d) { d.node.classList.toggle('focus', !onGear && !tileFocus); }
 }
+/* ---------------------------------------------------------------
+   Tiles you can select: a plugin with onOk (now playing's play/pause). Right from the
+   last app of a row reaches them, Up and Down move between them, Left or Back goes back
+   to the app you were on, OK runs onOk.
+---------------------------------------------------------------- */
+var tileFocus = null;     // the plugin whose tile has the focus
+// The right-hand column's tiles that can take the focus now, top to bottom.
+function focusablePlugins() {
+  return pluginsIn('right').filter(function (p) {
+    if (!p.def || typeof p.def.onOk !== 'function') { return false; }
+    if (!p.root.classList.contains('show') || p.root.classList.contains('leaving')) { return false; }
+    return typeof p.def.canFocus !== 'function' || pluginCall(p, 'canFocus') !== false;
+  });
+}
+// Give the focus to plugin p's tile (null: back to the app tile).
+function setTileFocus(p) {
+  if (tileFocus === (p || null)) { return; }
+  if (tileFocus) { tileFocus.root.classList.remove('focus'); pluginCall(tileFocus, 'onFocus', [false]); }
+  tileFocus = p || null;
+  if (tileFocus) { setGear(false); tileFocus.root.classList.add('focus'); pluginCall(tileFocus, 'onFocus', [true]); }
+  var d = cats[cur.c] && cats[cur.c].discs[cur.i];
+  if (d) { d.node.classList.toggle('focus', !onGear && !tileFocus); }
+}
+// Focus the i-th selectable tile on the right; false if there isn't one.
+function focusPluginTile(i) {
+  var list = focusablePlugins();
+  if (!list[i]) { return false; }
+  setTileFocus(list[i]);
+  return true;
+}
+// A key while a plugin's tile has the focus. Returns true if it was used.
+function tileKey(k) {
+  var list = focusablePlugins(), at = list.indexOf(tileFocus);
+  if (at < 0) { setTileFocus(null); return false; }              // it went away meanwhile
+  if (k === KEY.LEFT || k === KEY.BACK || k === KEY.ESC) { setTileFocus(null); }
+  else if (k === KEY.UP) { if (at > 0) { setTileFocus(list[at - 1]); } else { setGear(true); } }
+  else if (k === KEY.DOWN) { if (at < list.length - 1) { setTileFocus(list[at + 1]); } }
+  else if (k === KEY.ENTER) { okTile(tileFocus); }
+  else { return false; }
+  return true;
+}
+// OK (or a click) on a plugin's tile.
+function okTile(p) {
+  var now = Date.now();
+  if (now - lastFire < 500) { return; } // ignore remote key-repeat / double clicks
+  lastFire = now;
+  pluginCall(p, 'onOk');
+}
+
 // Next to the status capsule; the capsule hides when no plugin is in it (and Home
 // Assistant is fine). Returns true if anything moved.
 function placeGear() {
