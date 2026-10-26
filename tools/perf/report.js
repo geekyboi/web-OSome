@@ -67,6 +67,8 @@ function heading(t) { console.log('\n' + t + '\n' + new Array(t.length + 1).join
 // What was going on in a sample: TV off, TV Home, LG's home, live TV / inputs, or an app.
 function scenario(s) {
   if (OFF.test(s.power)) { return 'TV off / standby'; }
+  if (s.power === 'Screen Saver') { return 'Screen saver'; }
+  if (s.power === 'Screen Off') { return 'Screen off (sound only)'; }
   if (s.front === APP) { return 'TV Home in front'; }
   if (s.front === LG) { return "LG's home in front"; }
   if (/^com\.webos\.app\.(livetv|hdmi)/.test(s.front)) { return 'Live TV / HDMI'; }

@@ -160,7 +160,15 @@ top20() {
         b = 0; for (i = 1; i <= N; i++) { if (!(i in DONE) && (b == 0 || RSS[i] > RSS[b])) { b = i } }
         DONE[b] = 1; print ts "," up "," PID[b] "," NAME[b] "," RSS[b] "," TK[b]
       }
-    }' | while read -r l; do csv top 'time,uptime,pid,name,rss_kb,cpu_ticks' "$l"; done
+    }' | while read -r l; do
+      # WebAppMgr's processes all share a name: add their type (zygote, renderer...) from the command line
+      case "$l" in *,WebAppMgr,*)
+        pid=${l#*,*,}; pid=${pid%%,*}
+        t=$(tr '\0' '\n' < "/proc/$pid/cmdline" 2>/dev/null | sed -n 's/^--type=//p' | head -n 1)
+        l=$(echo "$l" | sed "s/,WebAppMgr,/,WebAppMgr(${t:-main}),/") ;;
+      esac
+      csv top 'time,uptime,pid,name,rss_kb,cpu_ticks' "$l"
+    done
 }
 
 # The main loop: start the listeners, then sample forever.
@@ -171,6 +179,7 @@ run() {
     sed -n 's/.*"state" *: *"\([^"]*\)".*/\1/p' > "$RUN/power"
   $LUNA -n 1 luna://com.webos.applicationManager/getForegroundAppInfo '{}' < /dev/null 2>/dev/null |
     sed -n 's/.*"appId" *: *"\([^"]*\)".*/\1/p' > "$RUN/front"
+  echo -999 > "$RUN/burst"   # no launch yet (and stops the shell complaining it's missing)
   p=; f=; read p < "$RUN/power"; read f < "$RUN/front"
   event start "$f" "$p"
   listen power luna://com.webos.service.tvpower/power/getPowerState &
