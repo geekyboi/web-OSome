@@ -145,6 +145,11 @@ function introTiles() {
     Array.prototype.forEach.call(discs, function (d) { d.style.animationDelay = ''; });
   }, 250 + discs.length * 120 + 700);
 }
+// Tell the service how long start-up took, in ms since the page began loading (for tools/perf).
+function perfMark(name) {
+  if (!window.performance || !performance.now) { return; }
+  luna(SVC + 'perfMark', { name: name, ms: Math.round(performance.now()) }, function () {});
+}
 // Fade out the holding screen once everything is ready (or after 4 seconds at most).
 function liftHold() {
   var hold = $('hold'), t0 = Date.now();
@@ -154,6 +159,7 @@ function liftHold() {
     var tiles = pluginsKnown && !pluginsLoading();       // the plugins' tiles are in place
     var icons = Array.prototype.every.call($('dock').getElementsByTagName('img'), function (i) { return i.complete; });
     if (!(bgReady && layout && tiles && icons) && Date.now() - t0 < 4000) { setTimeout(check, 80); return; }
+    perfMark(document.hidden ? 'ready-hidden' : 'ready');
     // preloaded in the background: nothing to see, so it's simply gone when TV Home is opened
     if (document.hidden) { hold.style.display = 'none'; introPending = true; return; }
     // two frames, so the finished screen has been painted underneath before it's revealed

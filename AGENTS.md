@@ -41,6 +41,7 @@ Everything works without the service, with fewer features: the app falls back to
 | `service/service.js`, `service/lib/` | The service: `http` (editor and API), `auth` (password, cookies), `layout`, `plugins`, `luna`, `power` (pauses while the TV is off or another app is in front), `homeassistant`. |
 | `service/web/editor/` | The phone editor, one file per part. |
 | `startup/` | Shell scripts that open the app at power-on on rooted TVs (Homebrew Channel `init.d` hook). |
+| `tools/perf/` | RAM, CPU and start-up time logging on the TV, a launch benchmark and a report (see its README). |
 | `home-assistant/` | Example automations, and an optional extra-apps list kept in Home Assistant. |
 
 **The browser files share one global scope.** There are no modules: each file is a plain
@@ -125,6 +126,8 @@ ares-inspect --device tv --app net.local.tvhome --open  # Chrome DevTools for th
 If the editor says the service isn't installed, package it explicitly:
 `ares-package web-osome web-osome/service`. On the TV, the service logs to
 `/tmp/tvhome-service.log` and the autostart watcher to `/tmp/tvhome-autostart.log`.
+To see what a change does to RAM, CPU or start-up time, use `tools/perf/` (see its
+README): a logger that runs on the TV for days, a launch benchmark, and a report.
 Before you call a change done, check:
 
 - the remote works: Up, Down, Left, Right, OK, Back and the red button, plus the Magic Remote pointer;

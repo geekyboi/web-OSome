@@ -19,6 +19,7 @@ var APP_DIR = process.env.TVHOME_APP_DIR || (function () {
   return fs.existsSync(tv) ? tv : path.resolve(SERVICE_DIR, '..');
 })();
 var LOG_FILE = process.env.TVHOME_LOG || '/tmp/tvhome-service.log';
+var PERF_DIR = process.env.TVPERF_DIR || '/home/root/tvperf';   // tools/perf/tvperf.sh's files, if it's installed
 var LG_HOME = 'com.webos.app.home';
 var MAX_UPLOAD = 8 * 1024 * 1024;
 var MAX_DOC = 512 * 1024;
@@ -59,6 +60,7 @@ exports.LG_HOME = LG_HOME;
 exports.MAX_DOC = MAX_DOC;
 exports.MAX_UPLOAD = MAX_UPLOAD;
 exports.PASS_FILE = PASS_FILE;
+exports.PERF_DIR = PERF_DIR;
 exports.PORT = PORT;
 exports.WEB = WEB;
 exports.log = log;
