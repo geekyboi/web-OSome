@@ -49,7 +49,7 @@ The folder name is the plugin's id: lower-case letters, digits, `-` and `_`.
 | Area | Plugins, in order |
 |---|---|
 | The capsule at the top right | weather (10), clock (20) |
-| The right-hand column | bins (10), calendar (20), now playing (30) |
+| The right-hand column | bins (10), now playing (20), calendar (30) |
 | Placed by its own CSS | greeting |
 
 ## tile.js: the tile on the home screen
@@ -86,8 +86,9 @@ What `api` gives it:
 |---|---|
 | `api.root` | the tile's element; `api.$('id')` finds an element inside it |
 | `api.region` | the capsule (status) or the screen it's in |
-| `api.show(on)` | show or hide it (class `show`); the column re-flows |
+| `api.show(on)` | show or hide it (class `show`, fading in and out); the column slides to fit |
 | `api.layout()` | its size changed: re-flow and repaint the glass |
+| `api.animateIn(node)` | new content in `node`: it fades up (once; nothing while TV Home is hidden) |
 | `api.settings()` | its settings, from the web editor (`settings.plugins.<id>`) |
 | `api.service.subscribe(topic, cb)` | data its service.js publishes; follows changes |
 | `api.service.call(method, params, cb)` | a one-off request to its service.js |

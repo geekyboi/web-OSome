@@ -67,15 +67,28 @@ function makeApi(p) {
     region: p.region === 'status' ? $('status') : $('shift'),
     $: function (x) { return root.querySelector('[id="' + x + '"]'); },
     settings: function () { return pluginSettings(p); },
-    // show or hide the tile (class "show"); returns true if that changed anything
+    // show or hide the tile (class "show"), fading it in or out; returns true if that changed anything
     show: function (on) {
       on = !!on;
-      if (root.classList.contains('show') === on) { return false; }
-      root.classList.toggle('show', on);
+      var leaving = root.classList.contains('leaving');
+      if ((root.classList.contains('show') && !leaving) === on) { return false; }
+      clearTimeout(p.fadeTimer);
+      if (on) {
+        root.classList.remove('leaving');
+        if (!leaving) { root.classList.add('show'); tileFlash(root, 'enter', TILE_IN); }
+      } else if (tilesAnimate()) {
+        // fade out first, then close the gap
+        root.classList.add('leaving');
+        p.fadeTimer = setTimeout(function () { root.classList.remove('show', 'leaving'); layoutRegion(p.region); }, TILE_OUT);
+        return true;
+      } else {
+        root.classList.remove('show');
+      }
       layoutRegion(p.region);
       return true;
     },
     layout: function () { layoutRegion(p.region); },   // its size changed
+    animateIn: function (node) { tileFlash(node, 'fresh', TILE_IN); },   // new content in node: fade it up
     service: {
       ready: function () { return !!svc.following; },
       subscribe: function (topic, cb) { var s = { topic: topic, cb: cb, bridge: null }; p.subs.push(s); pluginSubscribe(p, s); },
@@ -119,6 +132,7 @@ function unloadPlugin(id) {
   if (!p) { return; }
   delete plugins[id];
   if (p.state === 'on') { pluginCall(p, 'stop'); }
+  clearTimeout(p.fadeTimer);
   p.state = 'off';
   p.subs.forEach(function (s) { if (s.bridge) { try { s.bridge.cancel(); } catch (e) { /* gone */ } } });
   subs = subs.filter(function (b) { return !p.subs.some(function (s) { return s.bridge === b; }); });
@@ -231,9 +245,38 @@ function pluginsLoading() {
            plugins with shrink() give up some space (the calendar shows fewer events)
    stage:  anywhere on the screen; the plugin's CSS places it (the greeting) */
 var COL_TOP = 176, COL_BOTTOM = 1030, COL_GAP = 24;
+
+/* Tile animations: tiles fade in and out, the column slides when one comes, goes or
+   changes size, and new content fades up (api.animateIn). Only one-off CSS transitions
+   of opacity and transform (see css/style.css), and none while TV Home is hidden. */
+var TILE_IN = 500, TILE_OUT = 350, TILE_SLIDE = 450;
+// Should changes animate? Not while another app is in front: they just happen.
+function tilesAnimate() { return !document.hidden; }
+// Play a one-off CSS animation (class cls) on node, then take the class off again.
+function tileFlash(node, cls, ms) {
+  if (!node || !tilesAnimate()) { return; }
+  clearTimeout(node.flashTimer);
+  node.classList.remove(cls);
+  void node.offsetWidth;                         // restart it if it's already running
+  node.classList.add(cls);
+  node.flashTimer = setTimeout(function () { node.classList.remove(cls); }, ms);
+}
+// Slide node from where it was (dy px away) to where it is now.
+function tileSlide(node, dy) {
+  clearTimeout(node.slideTimer);
+  node.style.transition = 'none';
+  node.style.transform = 'translateY(' + dy + 'px)';
+  void node.offsetWidth;
+  node.style.transition = 'transform ' + TILE_SLIDE + 'ms cubic-bezier(0.2, 0.8, 0.2, 1)';
+  node.style.transform = '';
+  node.slideTimer = setTimeout(function () { node.style.transition = ''; }, TILE_SLIDE);
+}
+
 // Stack the right-hand column's tiles; if they don't fit, ask plugins to shrink().
 function layoutColumn() {
   var list = pluginsIn('right').filter(function (p) { return p.root.classList.contains('show'); });
+  // where the tiles already showing were, so they can slide to their new place
+  var was = list.map(function (p) { return p.root.classList.contains('enter') ? NaN : parseFloat(p.root.style.top); });
   pluginsIn('right').forEach(function (p) { pluginCall(p, 'unshrink'); });
   function place() {
     var y = COL_TOP;
@@ -244,6 +287,12 @@ function layoutColumn() {
   while (bottom > COL_BOTTOM && guard++ < 40) {
     if (!list.some(function (p) { return pluginCall(p, 'shrink') === true; })) { break; }
     bottom = place();
+  }
+  if (tilesAnimate()) {
+    list.forEach(function (p, i) {
+      var dy = was[i] - parseFloat(p.root.style.top);
+      if (dy) { tileSlide(p.root, dy); }         // (NaN: new, or never placed)
+    });
   }
   paintGlass();
 }

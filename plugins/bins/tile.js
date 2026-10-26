@@ -68,6 +68,7 @@
     var sub = list;
     var changed = api.$('binicons').innerHTML !== icons || api.$('bintitle').textContent !== title || api.$('binsub').textContent !== sub;
     if (changed) {
+      if (api.root.classList.contains('show')) { api.animateIn(api.root.querySelector('.bintext')); }   // e.g. tonight becomes today
       api.$('binicons').innerHTML = icons;
       api.$('bintitle').textContent = title;
       api.$('binsub').textContent = sub;
