@@ -1,118 +1,141 @@
-/* Now playing plugin: what the MusicCast amplifier is playing, a glass card in the right-hand column */
+/* Now playing plugin: what the MusicCast amplifier is playing. A slim glass bar in the right-hand
+   column: the album art as a disc, the song, and play/pause and next. */
 /* ---------- now playing on the amplifier (MusicCast) ---------- */
 #nowplaying {
   position: absolute;
   right: 96px; top: 176px;               /* top is set by js/core/plugins.js (the right-hand column) */
-  width: 560px;
-  padding: 22px 26px 22px 22px;
+  width: 560px; height: 132px;           /* as wide as the calendar */
+  padding: 14px 16px 14px 14px;
   border-radius: 36px;
-  background: linear-gradient(155deg, rgba(255, 255, 255, 0.20), rgba(255, 255, 255, 0.06) 45%, rgba(255, 255, 255, 0.12));
+  background: linear-gradient(120deg, rgba(22, 14, 40, 0.45), rgba(40, 24, 66, 0.32) 55%, rgba(255, 255, 255, 0.10));
   box-shadow:
-    inset 0 1.5px 0 rgba(255, 255, 255, 0.55),
-    inset 0 -1.5px 0 rgba(255, 255, 255, 0.14),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.12),
-    0 14px 30px rgba(0, 0, 0, 0.55);
+    inset 0 1.5px 0 rgba(255, 255, 255, 0.4),
+    inset 0 0 0 1.5px rgba(255, 255, 255, 0.14),
+    0 14px 30px rgba(0, 0, 0, 0.5);
   display: none;
   align-items: center;
-  gap: 24px;
+  gap: 20px;
   transition: opacity 2s ease, transform 1s ease;
 }
 #nowplaying.show { display: flex; }
 #nowplaying .sheen {
   position: absolute;
-  left: 14px; right: 14px; top: 3px;           /* fixed, so it spans the panel like the clock's */
-  height: 56px;
-  border-radius: 34px 34px 22px 22px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0));
+  left: 14px; right: 14px; top: 3px;
+  height: 44px;
+  border-radius: 34px 34px 20px 20px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0));
 }
-#nowplaying .npart {
-  position: relative;
-  flex: 0 0 136px;
-  width: 136px; height: 136px;
-  border-radius: 22px;
-  overflow: hidden;
-  background: linear-gradient(145deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.05));
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.16), 0 8px 20px rgba(0, 0, 0, 0.35);
+#nowplaying .npdisc, #nowplaying .nptitles, #nowplaying .npright { position: relative; }   /* above the glass */
+
+/* the disc: the album art in a circle with a light edge and a see-through centre */
+#nowplaying .npdisc {
+  flex: 0 0 104px;
+  width: 104px; height: 104px; border-radius: 50%;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+}
+#nowplaying .npflip {
+  position: absolute; left: 0; top: 0; right: 0; bottom: 0;
+  border-radius: 50%; overflow: hidden;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0.06)), #24242a;
   display: flex; align-items: center; justify-content: center;
   color: rgba(255, 255, 255, 0.6);
 }
+/* a new song: the disc turns once, and the new art goes on while it's moving */
+#nowplaying .npflip.go { animation: np-turn 0.75s cubic-bezier(0.3, 0.7, 0.2, 1); }
+@keyframes np-turn { to { transform: rotate(360deg); } }
 #npimg { position: absolute; left: 0; top: 0; width: 100%; height: 100%; object-fit: cover; display: none; }
 #nowplaying.hasart #npimg { display: block; }
 #nowplaying.hasart .npnote { display: none; }
-#nowplaying.paused .npart { opacity: 0.6; }
-#nowplaying .nptext { position: relative; flex: 1; min-width: 0; }
-#nowplaying .npsrc {
-  display: flex; justify-content: space-between; gap: 12px;
-  font-size: 20px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.6);
+#nowplaying .npdisc::before, #nowplaying .npdisc::after { content: ""; position: absolute; z-index: 1; border-radius: 50%; pointer-events: none; }
+#nowplaying .npdisc::before {              /* the light edge */
+  left: 0; top: 0; right: 0; bottom: 0;
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.5), inset 0 2px 0 rgba(255, 255, 255, 0.35);
 }
-#nptime { letter-spacing: 0.02em; font-weight: 500; font-variant-numeric: tabular-nums; }
+#nowplaying .npdisc::after {               /* the centre: see-through white */
+  left: 50%; top: 50%; width: 14px; height: 14px; margin: -7px 0 0 -7px;
+  background: rgba(255, 255, 255, 0.28);
+}
+
+/* song, artist and album: the old lines slide out and the new ones slide up in */
+#nowplaying .nptitles { flex: 1; min-width: 0; height: 92px; overflow: hidden; }
+#nowplaying .nptl { position: absolute; left: 0; right: 0; top: 0; bottom: 0; display: flex; flex-direction: column; justify-content: center; }   /* centred, two lines or three */
 #nowplaying .nptrack {
-  font-size: 32px; font-weight: 600; color: #fff; margin-top: 6px; line-height: 1.2;
+  font-size: 27px; font-weight: 600; line-height: 1.2; color: #fff;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   text-shadow: 0 1px 8px rgba(0, 0, 0, 0.35);
 }
 #nowplaying .npartist {
-  font-size: 23px; color: rgba(255, 255, 255, 0.7); margin-top: 4px;
+  font-size: 22px; line-height: 1.2; margin-top: 2px; color: rgba(255, 255, 255, 0.68);
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
-#nowplaying .npartist:empty { display: none; }
-#nowplaying .npbar {
-  height: 5px; margin-top: 16px; border-radius: 3px; overflow: hidden;
-  background: rgba(255, 255, 255, 0.18);
+#nowplaying .npalbum {
+  font-size: 19px; line-height: 1.2; margin-top: 2px; color: rgba(255, 255, 255, 0.5);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
-#nowplaying .npbar i {
-  display: block; height: 100%; width: 100%;
-  background: rgba(255, 255, 255, 0.85);
-  transform-origin: 0 50%; transform: scaleX(0);
-  transition: transform 1s linear;
-}
-#nowplaying.radio .npbar { display: none; }
+#nowplaying .nptl.in  { animation: np-in 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+#nowplaying .nptl.out { animation: np-out 0.4s ease both; }
+@keyframes np-in  { from { transform: translateY(92px); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes np-out { to { transform: translateY(-92px); opacity: 0; } }
+/* muted on the amp: a small icon before the artist */
+#nowplaying .npmute { display: none; vertical-align: -3px; margin-right: 6px; }
+#nowplaying.muted .npmute { display: inline-block; }
 
-/* play/pause: at the end of the card, only while it has the focus (Right from the last app
-   of a row), in the settings button's colours. Its room is kept, so the text doesn't move. */
-#nowplaying .npbtn {
+/* the right-hand end: the source (Spotify, AirPlay, Net Radio…), and in its place while the bar
+   is selected (Right from the last app of a row), play/pause and next */
+#nowplaying .npright { flex: 0 0 auto; min-width: 124px; height: 60px; display: flex; align-items: center; justify-content: flex-end; }
+#nowplaying .npsrc {
+  padding-right: 10px; white-space: nowrap;
+  font-size: 18px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.6);
+  transition: opacity 0.2s ease;
+}
+#nowplaying .npctl {
+  position: absolute; right: 0; top: 0;
+  display: flex; align-items: center; gap: 4px;
+  opacity: 0; transition: opacity 0.2s ease;
+}
+#nowplaying.focus .npctl { opacity: 1; }
+#nowplaying.focus .npsrc { opacity: 0; }
+/* the lit button sits on the pink like the settings button */
+#nowplaying .npb {
   position: relative;
-  flex: 0 0 72px;
-  width: 72px; height: 72px;
-  border-radius: 34%;
+  width: 60px; height: 60px; border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
-  color: #fff;
+  color: rgba(255, 255, 255, 0.92); cursor: pointer;
+  transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+#nowplaying .npb .lit {
+  position: absolute; left: 0; top: 0; right: 0; bottom: 0;
+  border-radius: 50%; opacity: 0; transform: scale(0.7);
   background: linear-gradient(145deg, #8b5cff, #e05bd8);
-  box-shadow: 0 0 24px rgba(160, 100, 255, 0.55), 0 14px 30px rgba(0, 0, 0, 0.55);
-  opacity: 0;
-  transform: scale(0.8);
+  box-shadow: 0 0 22px rgba(160, 100, 255, 0.55), 0 8px 18px rgba(0, 0, 0, 0.3);
   transition: opacity 0.2s ease, transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
-#nowplaying.focus .npbtn { opacity: 1; transform: scale(1.08); }
-#nowplaying.nocontrol .npbtn { display: none; }
-#nowplaying .npbtn .sheen {
-  left: 10px; right: 10px; top: 3px;
-  height: 34px;
-  border-radius: 50% 50% 50% 50% / 80% 80% 20% 20%;   /* a dome inside the round button, like the gear's */
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.26), rgba(255, 255, 255, 0));
-  pointer-events: none;
-}
-/* both icons are there; the one that applies fades and grows in */
-#nowplaying .npbtn svg { position: absolute; transition: opacity 0.2s ease, transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1); }
-#nowplaying .npbtn .ic-play { opacity: 0; transform: scale(0.6); }
-#nowplaying.paused .npbtn .ic-play { opacity: 1; transform: none; }
-#nowplaying.paused .npbtn .ic-pause { opacity: 0; transform: scale(0.6); }
-#nowplaying.focus .npbtn.fire { animation: np-press 0.4s ease; }
+#nowplaying.focus .npb.on { transform: scale(1.08); color: #fff; }
+#nowplaying.focus .npb.on .lit { opacity: 1; transform: none; }
+#nowplaying .npb svg { position: absolute; transition: opacity 0.2s ease, transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1); }
+/* both play/pause icons are there; the one that applies fades and grows in */
+#nowplaying .npb .ic-play { opacity: 0; transform: scale(0.6); }
+#nowplaying.paused .npb .ic-play { opacity: 1; transform: none; }
+#nowplaying.paused .npb .ic-pause { opacity: 0; transform: scale(0.6); }
+#nowplaying.focus .npb.on.fire { animation: np-press 0.4s ease; }
 @keyframes np-press {
   0%   { transform: scale(1.08); }
-  35%  { transform: scale(0.96); }
+  35%  { transform: scale(0.92); }
   100% { transform: scale(1.08); }
 }
+/* the radio: no buttons (it can't be selected) */
+#nowplaying.nocontrol .npctl { display: none; }
 
+/* light background behind it: light glass, dark text */
 #nowplaying.ink {
-  background: linear-gradient(155deg, rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0.5) 45%, rgba(255, 255, 255, 0.62));
+  background: linear-gradient(120deg, rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0.5) 55%, rgba(255, 255, 255, 0.62));
   box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, 0.9), inset 0 0 0 1px rgba(0, 0, 0, 0.08), 0 14px 30px rgba(0, 0, 0, 0.18);
 }
 #nowplaying.ink .gcv { opacity: 1; }
-#nowplaying.ink .npsrc { color: rgba(14, 14, 20, 0.55); }
 #nowplaying.ink .nptrack { color: #0e0e14; text-shadow: none; }
 #nowplaying.ink .npartist { color: rgba(14, 14, 20, 0.7); }
-#nowplaying.ink .npart { color: rgba(14, 14, 20, 0.5); background: rgba(0, 0, 0, 0.06); box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.1); }
-#nowplaying.ink .npbar { background: rgba(0, 0, 0, 0.12); }
-#nowplaying.ink .npbar i { background: rgba(14, 14, 20, 0.75); }
+#nowplaying.ink .npalbum { color: rgba(14, 14, 20, 0.5); }
+#nowplaying.ink .npsrc { color: rgba(14, 14, 20, 0.55); }
+#nowplaying.ink .npb { color: #0e0e14; }
+#nowplaying.ink.focus .npb.on { color: #fff; }

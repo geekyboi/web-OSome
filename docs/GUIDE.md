@@ -371,9 +371,9 @@ Times show in the TV's time zone in 24-hour format, for example "Today · 19:00"
 
 ## 8. Now playing on a Yamaha MusicCast amplifier (needs the web editor's service)
 
-A glass card on the right, under the calendar, shows what the amplifier is playing: the artwork, track, artist and album, the source (Spotify, AirPlay, Net Radio, Bluetooth, USB and so on) and a progress bar. DAB/FM radio shows the station name and the scrolling text. CD shows the track. The card hides while the amp is in standby, stopped, or on the TV or another HDMI input.
+A slim glass bar on the right, under the calendar, shows what the amplifier is playing: the track, artist and album, with the artwork as a disc (it turns once when the song changes), and the source (Spotify, AirPlay, Net Radio, Bluetooth, USB and so on). DAB/FM radio shows the station name and the scrolling text. CD shows the track. The bar hides while the amp is in standby, stopped, or on the TV or another HDMI input.
 
-To play or pause, press Right on the last app in a row to select the card, then OK. A pink play/pause button shows while it's selected; Left or Back goes back to the app you were on. This works for streaming, USB, Bluetooth and CD, not the radio.
+To play, pause or skip, press Right on the last app in a row to select the bar. Play/pause and next take the source's place, with play/pause lit pink. Right for next, then OK. Left from play/pause, or Back, goes back to the app you were on. This works for streaming, USB, Bluetooth and CD, not the radio.
 
 1. Find the amp's IP address in the MusicCast app (Settings → your device → Network) or in your router. A fixed or reserved IP address keeps it from changing.
 2. In the web editor go to **Settings → Now playing**, enter the IP address (for example `192.168.1.20`), tap **Check the amplifier**, then **Save**.

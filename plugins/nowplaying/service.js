@@ -31,7 +31,7 @@ module.exports = {
 
     // the TV app: { configured, now: { power, inputName, source, playback, track, artist, album, art, playTime, totalTime }, error }
     api.method('now', function (params, reply) { ampNow(reply); });
-    // the TV app's play/pause button: { playback: 'play' | 'pause' }
+    // the TV app's buttons: { playback: 'play' | 'pause' | 'next' | 'previous' }
     api.method('playback', function (params, reply) {
       var host = api.settings().host || '';
       var now = amp.host === host && amp.result && amp.result.now;

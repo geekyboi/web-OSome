@@ -137,11 +137,11 @@ function pipeArt(host, rel, res) {
   req.setTimeout(5000, function () { req.abort(); });
 }
 
-// Play or pause (playback 'play' or 'pause') what the amp is playing: source 'netusb' or 'cd'.
+// Play, pause or skip (playback 'play', 'pause', 'next' or 'previous') on the amp: source 'netusb' or 'cd'.
 function setPlayback(host, source, playback, cb) {
   host = cleanHost(host);
   if (!host) { cb(new Error('Enter the amplifier’s IP address.')); return; }
-  if (!/^(play|pause)$/.test(playback) || !/^(netusb|cd)$/.test(source)) { cb(new Error('Can’t do that.')); return; }
+  if (!/^(play|pause|next|previous)$/.test(playback) || !/^(netusb|cd)$/.test(source)) { cb(new Error('Can’t do that.')); return; }
   get(host, source + '/setPlayback?playback=' + playback, function (err) { cb(err || null); });
 }
 

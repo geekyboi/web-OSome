@@ -298,6 +298,7 @@ function focusPluginTile(i) {
 function tileKey(k) {
   var list = focusablePlugins(), at = list.indexOf(tileFocus);
   if (at < 0) { setTileFocus(null); return false; }              // it went away meanwhile
+  if (pluginCall(tileFocus, 'onKey', [k]) === true) { return true; }   // its own controls (e.g. Left/Right between buttons)
   if (k === KEY.LEFT || k === KEY.BACK || k === KEY.ESC) { setTileFocus(null); }
   else if (k === KEY.UP) { if (at > 0) { setTileFocus(list[at - 1]); } else { setGear(true); } }
   else if (k === KEY.DOWN) { if (at < list.length - 1) { setTileFocus(list[at + 1]); } }
