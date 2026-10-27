@@ -252,7 +252,7 @@ function pluginsLoading() {
    right:  the column under it, stacked in order with 24px between; if they don't all fit,
            plugins with shrink() give up some space (the calendar shows fewer events)
    stage:  anywhere on the screen; the plugin's CSS places it (the greeting) */
-var COL_TOP = 176, COL_BOTTOM = 1030, COL_GAP = 24;
+var COL_TOP = 168, COL_BOTTOM = 1030, COL_GAP = 24;
 
 /* Tile animations: tiles fade in and out, the column slides when one comes, goes or
    changes size, and new content fades up (api.animateIn). Only one-off CSS transitions

@@ -4,6 +4,63 @@
 
 * { box-sizing: border-box; }
 
+/* ---------- shared look: every surface and plugin tile uses these, so they stay in step ---------- */
+:root {
+  /* colour */
+  --accent: linear-gradient(145deg, #8b5cff, #e05bd8);     /* the pink focus */
+  --accent-glow: rgba(160, 100, 255, 0.55);
+  --accent-ring: #b89bff;
+  --ink: #0e0e14;                                            /* dark text, on light pictures */
+  --ink-2: rgba(14, 14, 20, 0.7);
+  --ink-3: rgba(14, 14, 20, 0.55);
+  --t2: rgba(255, 255, 255, 0.72);                           /* secondary text */
+  --t3: rgba(255, 255, 255, 0.55);                           /* tertiary text and small caps */
+  --ok: #5be3a3;
+  --err: #ff7a6b;
+  --err-text: #ffb4a8;
+  --warm: rgba(255, 196, 92, 0.55);
+  --surface: #07070b;                                        /* Settings */
+  --raised: #16161c;                                         /* cards and plain icon bases */
+  --shadow-text: 0 2px 16px rgba(0, 0, 0, 0.45);             /* white text on the picture */
+  --shadow-text-glass: 0 1px 8px rgba(0, 0, 0, 0.35);        /* white text on glass */
+
+  /* glass */
+  --glass: linear-gradient(155deg, rgba(255, 255, 255, 0.20), rgba(255, 255, 255, 0.06) 45%, rgba(255, 255, 255, 0.12));
+  --glass-edge: inset 0 1.5px 0 rgba(255, 255, 255, 0.55), inset 0 -1.5px 0 rgba(255, 255, 255, 0.14), inset 0 0 0 1px rgba(255, 255, 255, 0.12);
+  --glass-ink: linear-gradient(155deg, rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0.5) 45%, rgba(255, 255, 255, 0.62));
+  --glass-edge-ink: inset 0 1.5px 0 rgba(255, 255, 255, 0.9), inset 0 0 0 1px rgba(0, 0, 0, 0.08);
+  --lift: 0 14px 30px rgba(0, 0, 0, 0.55);
+  --lift-ink: 0 14px 30px rgba(0, 0, 0, 0.18);
+  --sheen: linear-gradient(180deg, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0));
+
+  /* focus: big icons grow more than small buttons; pressing dips to about 94% and back */
+  --focus-glow: 0 0 24px var(--accent-glow);
+  --focus-shadow: var(--focus-glow), 0 10px 24px rgba(0, 0, 0, 0.45);
+
+  /* shape */
+  --r-panel: 36px;
+  --r-inner: 24px;
+  --r-small: 16px;
+  --r-pill: 999px;
+  --r-squircle: 34%;
+
+  /* space: the same margin on both sides, and one gap down the right-hand column */
+  --edge-x: 90px;
+  --edge-top: 60px;
+
+  /* type */
+  --fs-display: 46px;     /* greeting, clock, titles: weight 300 */
+  --fs-title: 32px;       /* a panel's main line: weight 600 */
+  --fs-meta: 22px;        /* its second line */
+  --fs-small: 20px;       /* its third line, and small caps: weight 600, 0.16em, --t3 */
+
+  /* motion */
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --t-fast: 0.2s;         /* fades and colour */
+  --t-move: 0.25s;        /* focus moves */
+  --t-enter: 0.5s;        /* things arriving */
+}
+
 html, body {
   margin: 0;
   width: 1920px;
@@ -47,32 +104,28 @@ html, body {
 
 /* ---------- plugin tiles coming, going and changing (js/core/plugins.js) ----------
    one-off transitions of opacity and transform only, so the GPU does them */
-#shift .plugin.enter { animation: tile-enter 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+#shift .plugin.enter { animation: tile-enter var(--t-enter) var(--ease) both; }
 #shift .plugin.leaving {
   opacity: 0;
   transform: scale(0.96);
-  transition: opacity 0.35s ease, transform 0.35s ease;
+  transition: opacity var(--t-move) ease, transform var(--t-move) ease;
 }
-@keyframes tile-enter { from { opacity: 0; transform: translateY(18px) scale(0.97); } to { opacity: 1; transform: none; } }
-#shift .plugin .fresh { animation: tile-fresh 0.5s ease both; }
-@keyframes tile-fresh { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@keyframes tile-enter { from { opacity: 0; transform: translateY(12px) scale(0.97); } to { opacity: 1; transform: none; } }
+#shift .plugin .fresh { animation: tile-fresh var(--t-enter) var(--ease) both; }
+@keyframes tile-fresh { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
 
 /* ---------- status capsule ---------- */
 #status {
   position: absolute;
-  right: 96px; top: 60px;
+  right: var(--edge-x); top: var(--edge-top);
   height: 84px;
   display: flex;
   align-items: center;
   gap: 22px;
   padding: 0 38px 0 30px;
-  border-radius: 42px;
-  background: linear-gradient(155deg, rgba(255, 255, 255, 0.20), rgba(255, 255, 255, 0.06) 45%, rgba(255, 255, 255, 0.12));
-  box-shadow:
-    inset 0 1.5px 0 rgba(255, 255, 255, 0.55),
-    inset 0 -1.5px 0 rgba(255, 255, 255, 0.14),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.12),
-    0 14px 30px rgba(0, 0, 0, 0.55);
+  border-radius: var(--r-pill);
+  background: var(--glass);
+  box-shadow: var(--glass-edge), var(--lift);
   transition: opacity 2s ease, transform 1s ease;
 }
 #status.empty { display: none; }     /* no plugin in it (js/core/dock.js placeGear) */
@@ -81,7 +134,7 @@ html, body {
   left: 12px; right: 12px; top: 3px;            /* fixed, so it spans the bar at any width */
   height: 34px;
   border-radius: 36px 36px 20px 20px / 26px 26px 8px 8px;   /* follows the pill's round ends */
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.26), rgba(255, 255, 255, 0));
+  background: var(--sheen);
 }
 /* Home Assistant: hidden while it's reachable; a house with a red dot only when it isn't */
 #status .house { position: relative; display: none; width: 20px; height: 20px; opacity: 0.85; }
@@ -91,14 +144,14 @@ html, body {
   right: -2px; top: -2px;
   width: 6px; height: 6px;
   border-radius: 50%;
-  background: #ff7a6b;
+  background: var(--err);
 }
 
 
 /* ---------- dock ---------- */
 #dock {
   position: absolute;
-  left: 140px; top: 420px;
+  left: calc(var(--edge-x) + 56px); top: 420px;   /* the category names hang 56px to the left, on the edge */
   width: 1500px;
   display: flex;
   flex-direction: column;
@@ -115,11 +168,11 @@ html, body {
   font-weight: 500;
   font-size: 28px;
   line-height: 1;
-  letter-spacing: 0.24em;
+  letter-spacing: 0.2em;
   text-transform: uppercase;
   color: rgba(255, 255, 255, 0.38);
   cursor: pointer;
-  transition: color 0.25s ease;
+  transition: color var(--t-move) ease;
 }
 .cat.open .head { color: #fff; }
 
@@ -133,9 +186,9 @@ html, body {
 }
 .cat.open .row {
   display: block;
-  animation: rowin 0.45s cubic-bezier(0.2, 0.8, 0.2, 1);
+  animation: rowin var(--t-enter) var(--ease);
 }
-@keyframes rowin { from { opacity: 0; transform: translateY(-14px); } to { opacity: 1; transform: none; } }
+@keyframes rowin { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
 .tiles {
   display: flex;
   gap: 30px;
@@ -148,19 +201,19 @@ html, body {
   position: relative;
   flex: 0 0 auto;
   width: 132px; height: 132px;
-  border-radius: 34%;
+  border-radius: var(--r-squircle);
   cursor: pointer;
-  transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+  transition: transform var(--t-move) var(--ease);
 }
 .disc.focus { transform: translateY(-4px) scale(1.14); }
 .disc.fire  { animation: pulse 0.4s ease; }
 @keyframes pulse {
   0%   { transform: translateY(-4px) scale(1.14); }
-  35%  { transform: translateY(-2px) scale(1.04); }
+  35%  { transform: translateY(-2px) scale(1.07); }
   100% { transform: translateY(-4px) scale(1.14); }
 }
 /* once per launch: the open row's icons fade and rise in one after another (delays set by js/core/main.js) */
-#dock.intro .cat.open .disc { animation: tilein 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+#dock.intro .cat.open .disc { animation: tilein 0.6s var(--ease) both; }
 #dock.intro .cat.open .disc.focus { animation-name: tilein-focus; }
 @keyframes tilein { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
 @keyframes tilein-focus { from { opacity: 0; transform: translateY(8px) scale(1.14); } to { opacity: 1; transform: translateY(-4px) scale(1.14); } }
@@ -169,16 +222,15 @@ html, body {
   position: absolute;
   pointer-events: none;
   opacity: 0.6;
-  transition: opacity 0.2s ease;
+  transition: opacity var(--t-fast) ease;
 }
 /* --c / --g are set per tile from its "color"; the fallback is the violet-pink gradient */
 .bodyon {
   left: 0; top: 0; right: 0; bottom: 0;
-  border-radius: 34%;
-  background: var(--c, linear-gradient(145deg, #8b5cff, #e05bd8));
+  border-radius: var(--r-squircle);
+  background: var(--c, var(--accent));
   box-shadow:
-    inset 0 0 0 0px rgba(255, 255, 255, 0.3),
-    0 0 24px var(--g, rgba(160, 100, 255, 0.55)),
+    0 0 24px var(--g, var(--accent-glow)),
     0 20px 44px rgba(0, 0, 0, 0.6);
 }
 .sheen2 {
@@ -206,7 +258,7 @@ html, body {
   color: #fff;
   opacity: 0.72;
   pointer-events: none;
-  transition: opacity 0.2s ease;
+  transition: opacity var(--t-fast) ease;
 }
 .disc.focus .glyph { opacity: 1; }
 .glyph svg { display: block; }
@@ -215,7 +267,7 @@ html, body {
   font-size: 48px;
   line-height: 1;
   letter-spacing: -0.01em;
-  text-shadow: 0 1px 10px rgba(0, 0, 0, 0.3);
+  text-shadow: var(--shadow-text-glass);
 }
 .glyph-img {
   max-width: 100px;             /* room for wide logos such as Apple TV's */
@@ -236,7 +288,7 @@ html, body {
   letter-spacing: 0.01em;
   color: rgba(255, 255, 255, 0.8);
   opacity: 0;
-  transition: opacity 0.2s ease;
+  transition: opacity var(--t-fast) ease;
   pointer-events: none;
 }
 .disc.focus .label { opacity: 1; }
@@ -253,7 +305,7 @@ html, body {
   justify-content: center;
   flex: 0 0 auto;
   width: 64px; height: 64px;
-  border-radius: 34%;
+  border-radius: var(--r-pill);
   background: rgba(255, 255, 255, 0.05);
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.22);
   color: #fff;
@@ -267,16 +319,16 @@ html, body {
 /* ---------- toast ---------- */
 #toast {
   position: absolute;
-  right: 96px; top: 168px;
+  right: var(--edge-x); top: 168px;
   max-width: 760px;
-  padding: 16px 30px 16px 26px;
-  border-radius: 36px;
-  background: rgba(22, 26, 32, 0.92);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), inset 0 0 0 1px rgba(255, 255, 255, 0.12), 0 14px 30px rgba(0, 0, 0, 0.55);
+  padding: 16px 30px;
+  border-radius: var(--r-pill);
+  background: rgba(22, 22, 28, 0.92);
+  box-shadow: var(--glass-edge), var(--lift);
   font-size: 26px;
   opacity: 0;
-  transform: translateY(-10px);
-  transition: opacity 0.2s ease, transform 0.2s ease;
+  transform: translateY(-12px);
+  transition: opacity var(--t-fast) ease, transform var(--t-move) var(--ease);
   pointer-events: none;
 }
 #toast.show { opacity: 1; transform: none; }
@@ -286,34 +338,43 @@ html, body {
   width: 14px; height: 14px;
   margin-right: 14px;
   border-radius: 7px;
-  background: #5be3a3;
+  background: var(--ok);
 }
-#toast.error::before { background: #ff7a6b; }
+#toast.error::before { background: var(--err); }
 
 
-/* ---------- settings button (left of the clock) ---------- */
+/* ---------- settings button (left of the clock): the same glass as the clock capsule ---------- */
 #gear {
   position: absolute;
-  top: 70px; right: 420px;          /* right is set by js/core/dock.js from the clock capsule's width */
-  width: 64px; height: 64px;
-  border-radius: 34%;
+  top: var(--edge-top); right: 420px;   /* right is set by js/core/dock.js from the clock capsule's width */
+  width: 84px; height: 84px;
+  border-radius: var(--r-pill);         /* no overflow: hidden, it would cut off the glass's 1px overhang (.gcv) */
   display: flex;
   align-items: center;
   justify-content: center;
-  color: rgba(255, 255, 255, 0.72);
-  background: rgba(255, 255, 255, 0.05);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18);
+  color: #fff;
+  background: var(--glass);
+  box-shadow: var(--glass-edge), var(--lift);
   cursor: pointer;
   transform: none;
-  transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 2s ease;
+  transition: transform var(--t-move) var(--ease), opacity 2s ease;
 }
+#gear .sheen {
+  position: absolute;
+  left: 10px; right: 10px; top: 3px;
+  height: 34px;
+  border-radius: 50% 50% 50% 50% / 80% 80% 20% 20%;   /* a dome that sits inside the round button */
+  background: var(--sheen);
+  pointer-events: none;
+}
+#gear svg { display: block; position: relative; width: 34px; height: 34px; opacity: 0.92; }
 #gear.focus {
-  color: #fff;
-  background: linear-gradient(145deg, #8b5cff, #e05bd8);
-  box-shadow: 0 0 24px rgba(160, 100, 255, 0.55), 0 14px 30px rgba(0, 0, 0, 0.6);
-  transform: scale(1.12);
+  background: var(--accent);
+  box-shadow: var(--focus-shadow);
+  transform: scale(1.08);
 }
-#gear svg { display: block; }
+#gear.focus .gcv { opacity: 0; }
+#gear.focus svg { opacity: 1; }
 
 /* ---------- settings screen ---------- */
 #toast { z-index: 20; }               /* confirmations show above Settings */
@@ -322,31 +383,31 @@ html, body {
   position: absolute;
   left: 0; top: 0;
   width: 1920px; height: 1080px;
-  background: #07070b;
+  background: var(--surface);
   z-index: 10;
 }
 #settings.show { display: block; }
 
 .s-title {
   position: absolute;
-  left: 84px; top: 60px;
+  left: var(--edge-x); top: var(--edge-top);
   height: 84px;
   display: flex;
   align-items: center;
   font-weight: 300;
-  font-size: 46px;
+  font-size: var(--fs-display);
   line-height: 1;
 }
 .s-top {
   position: absolute;
-  right: 96px; top: 70px;
+  right: var(--edge-x); top: 70px;
   display: flex;
   gap: 20px;
 }
 .s-btn {
   height: 64px;
   padding: 0 32px;
-  border-radius: 22px;
+  border-radius: var(--r-pill);
   display: flex;
   align-items: center;
   font-size: 26px;
@@ -356,19 +417,19 @@ html, body {
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.16);
   cursor: pointer;
 }
-.s-reset.armed { color: #ffb4a8; }
+.s-reset.armed { color: var(--err-text); }
 
 .s-tabs { display: flex; gap: 14px; }
-#s-cats { position: absolute; left: 84px; top: 186px; }
+#s-cats { position: absolute; left: var(--edge-x); top: 186px; }
 .s-tab {
   height: 60px;
   padding: 0 28px;
-  border-radius: 30px;
+  border-radius: var(--r-pill);
   display: flex;
   align-items: center;
   font-size: 24px;
   font-weight: 500;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.2em;
   text-transform: uppercase;
   color: rgba(255, 255, 255, 0.5);
   cursor: pointer;
@@ -379,26 +440,26 @@ html, body {
 .s-panel {
   position: absolute;
   top: 282px; bottom: 56px;
-  width: 846px;
+  width: 843px;
   padding: 28px 30px 20px;
-  border-radius: 36px;
+  border-radius: var(--r-panel);
   background: rgba(255, 255, 255, 0.04);
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.07);
   display: flex;
   flex-direction: column;
 }
-.s-left  { left: 84px; }
-.s-right { left: 990px; }
+.s-left  { left: var(--edge-x); }
+.s-right { right: var(--edge-x); }
 .s-h {
-  font-size: 21px;
-  font-weight: 500;
-  letter-spacing: 0.2em;
+  font-size: var(--fs-small);
+  font-weight: 600;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--t3);
   margin: 4px 0 18px;
 }
-.s-msg { white-space: pre-line; font-size: 21px; line-height: 1.35; color: rgba(255, 255, 255, 0.55); margin: 16px 4px 10px; min-height: 28px; }
-.s-msg.err { color: #ffb4a8; }
+.s-msg { white-space: pre-line; font-size: var(--fs-small); line-height: 1.35; color: var(--t3); margin: 16px 4px 10px; min-height: 28px; }
+.s-msg.err { color: var(--err-text); }
 .s-list {
   position: relative;
   flex: 1;
@@ -408,7 +469,7 @@ html, body {
   padding: 4px 12px;
 }
 .s-list::-webkit-scrollbar { width: 0; height: 0; }
-.s-empty { font-size: 24px; color: rgba(255, 255, 255, 0.45); padding: 24px 4px; }
+.s-empty { font-size: var(--fs-meta); color: var(--t3); padding: 24px 4px; }
 
 .s-row, .s-item {
   display: flex;
@@ -416,7 +477,7 @@ html, body {
   gap: 18px;
   min-height: 92px;
   padding: 10px 12px;
-  border-radius: 24px;
+  border-radius: var(--r-inner);
 }
 .s-row + .s-row { box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06); }
 .s-item { cursor: pointer; }
@@ -425,11 +486,11 @@ html, body {
 .s-ico {
   flex: 0 0 auto;
   width: 64px; height: 64px;
-  border-radius: 34%;
+  border-radius: var(--r-squircle);
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(145deg, #8b5cff, #e05bd8);
+  background: var(--accent);
   color: #fff;
   overflow: hidden;
 }
@@ -440,14 +501,14 @@ html, body {
 
 .s-txtcol { flex: 1; min-width: 0; }
 .s-name { font-size: 28px; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.s-sub  { font-size: 19px; line-height: 1.3; color: rgba(255, 255, 255, 0.45); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.s-sub  { font-size: var(--fs-small); line-height: 1.3; color: var(--t3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 .s-input {
   width: 100%;
   height: 58px;
   padding: 0 16px;
   border: 0;
-  border-radius: 16px;
+  border-radius: var(--r-small);
   outline: none;
   font: inherit;
   font-size: 28px;
@@ -459,7 +520,7 @@ html, body {
 .s-ib {
   flex: 0 0 auto;
   width: 58px; height: 58px;
-  border-radius: 34%;
+  border-radius: var(--r-pill);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -475,20 +536,20 @@ html, body {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 22px;
-  color: rgba(255, 255, 255, 0.7);
+  font-size: var(--fs-meta);
+  color: var(--t2);
   padding-right: 6px;
 }
 
 /* the one focused control */
 .sf.sfocus {
   color: #fff;
-  background: linear-gradient(145deg, #8b5cff, #e05bd8);
-  box-shadow: 0 0 22px rgba(160, 100, 255, 0.45);
+  background: var(--accent);
+  box-shadow: var(--focus-glow);
   opacity: 1;
 }
 .s-item.sfocus .s-sub, .s-item.sfocus .s-add { color: rgba(255, 255, 255, 0.85); }
-.s-input.sfocus { background: rgba(255, 255, 255, 0.14); box-shadow: inset 0 0 0 2px #b89bff, 0 0 22px rgba(160, 100, 255, 0.45); }
+.s-input.sfocus { background: rgba(255, 255, 255, 0.14); box-shadow: inset 0 0 0 2px var(--accent-ring), var(--focus-glow); }
 
 /* ---------- the TV's own app icons (rooted TVs, via the Homebrew Channel) ---------- */
 /* An app's own icon is opaque, and its colour (.bodyon) sits behind it, so at rest both are
@@ -500,10 +561,10 @@ html, body {
 .disc.art .glyph-img {
   width: 100%; height: 100%;
   max-width: none; max-height: none;
-  border-radius: 34%;
+  border-radius: var(--r-squircle);
   object-fit: cover;
 }
-.disc.art .bodyon { background: var(--c, #1c1c22); }
+.disc.art .bodyon { background: var(--c, var(--raised)); }
 /* keep the glass highlights, drawn over the icon */
 .disc.art .glyph { z-index: 1; }
 .disc.art .sheen2, .disc.art .caustic { z-index: 2; }
@@ -513,7 +574,7 @@ html, body {
   content: '';
   position: absolute;
   left: 0; top: 0; right: 0; bottom: 0;
-  border-radius: 34%;
+  border-radius: var(--r-squircle);
   z-index: 2;
   pointer-events: none;
   background: linear-gradient(180deg, rgba(0, 0, 0, 0) 50%, rgba(0, 0, 0, 0.15));
@@ -522,7 +583,7 @@ html, body {
     inset 0 0 0 1.5px rgba(0, 0, 0, 0.08),
     inset 0 1.5px 0 rgba(255, 255, 255, 0.2);
   opacity: 0.6;
-  transition: opacity 0.2s ease;
+  transition: opacity var(--t-fast) ease;
 }
 .disc.art.focus::after { opacity: 1; }
 .s-ico.art { background: transparent; }
@@ -547,53 +608,58 @@ html, body {
   gap: 64px;
   padding: 56px 64px;
   max-width: 1500px;
-  border-radius: 40px;
-  background: #121218;
+  border-radius: var(--r-panel);
+  background: var(--raised);
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08), 0 30px 80px rgba(0, 0, 0, 0.6);
 }
-.s-qr { width: 440px; height: 440px; border-radius: 24px; image-rendering: pixelated; flex: 0 0 auto; }
+.s-qr { width: 440px; height: 440px; border-radius: var(--r-inner); image-rendering: pixelated; flex: 0 0 auto; }
 .s-ph-side { max-width: 760px; }
-.s-ph-title { font-size: 44px; font-weight: 300; margin-bottom: 26px; }
+.s-ph-title { font-size: var(--fs-display); font-weight: 300; margin-bottom: 26px; }
 .s-ph-text { font-size: 27px; line-height: 1.4; color: rgba(255, 255, 255, 0.7); margin: 10px 0; }
 .s-ph-url { font-size: 36px; font-weight: 500; margin: 6px 0 22px; letter-spacing: 0.01em; }
 .s-ph-pass {
   display: inline-block;
   font-size: 64px; font-weight: 600; letter-spacing: 0.16em;
   margin: 10px 0 0; padding: 10px 26px;
-  border-radius: 20px; background: rgba(255, 255, 255, 0.08);
+  border-radius: var(--r-inner); background: rgba(255, 255, 255, 0.08);
   font-variant-numeric: tabular-nums;
 }
 .s-ph-code {
   font-family: "DejaVu Sans Mono", monospace; font-size: 24px; color: #fff;
-  background: rgba(255, 255, 255, 0.07); padding: 14px 18px; border-radius: 14px; margin: 14px 0;
+  background: rgba(255, 255, 255, 0.07); padding: 14px 18px; border-radius: var(--r-small); margin: 14px 0;
   word-break: break-all;
 }
 .s-ph-buttons { display: flex; gap: 20px; }
 
 /* ---------- readable text on any background ---------- */
 /* a soft shadow keeps white text legible over busy pictures */
-.head, .label { text-shadow: 0 2px 16px rgba(0, 0, 0, 0.45); }
+.head, .label { text-shadow: var(--shadow-text); }
 
-/* .ink = dark text, used where the picture behind is light (or when chosen in the editor) */
-#dock.ink .head { color: rgba(14, 14, 20, 0.5); text-shadow: 0 1px 12px rgba(255, 255, 255, 0.6); }
-#dock.ink .cat.open .head { color: #0e0e14; }
-#dock.ink .label { color: rgba(14, 14, 20, 0.88); text-shadow: 0 1px 10px rgba(255, 255, 255, 0.65); }
+/* .ink = dark text, used where the picture behind is light (or when chosen in the editor):
+   heavier, with a subtle white glow */
+#dock.ink .head {
+  font-weight: 700;
+  color: rgba(14, 14, 20, 0.72);
+  text-shadow: 0 0 1px rgba(255, 255, 255, 0.6), 0 0 8px rgba(255, 255, 255, 0.4);
+}
+#dock.ink .cat.open .head { color: var(--ink); }
+#dock.ink .label {
+  font-weight: 600;
+  color: var(--ink);
+  text-shadow: 0 0 1px rgba(255, 255, 255, 0.6), 0 0 8px rgba(255, 255, 255, 0.45);
+}
 #dock.ink .arrow {
-  color: #14141a;
+  color: var(--ink);
   background: rgba(255, 255, 255, 0.5);
   box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.14);
 }
-#status.ink {
-  background: linear-gradient(155deg, rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0.5) 45%, rgba(255, 255, 255, 0.62));
-  box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, 0.9), inset 0 0 0 1px rgba(0, 0, 0, 0.08), 0 14px 30px rgba(0, 0, 0, 0.18);
+#status.ink, #gear.ink:not(.focus) {
+  background: var(--glass-ink);
+  box-shadow: var(--glass-edge-ink), var(--lift-ink);
 }
-#status.ink .gcv { opacity: 1; }   /* the white tint is baked into the blurred copy (paintOne) */
-#status.ink .house svg { stroke: #14141a; }
-#gear.ink:not(.focus) {
-  color: #14141a;
-  background: rgba(255, 255, 255, 0.5);
-  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.14);
-}
+#status.ink .gcv, #gear.ink:not(.focus) .gcv { opacity: 1; }   /* the white tint is baked into the blurred copy (paintOne) */
+#status.ink .house svg { stroke: var(--ink); }
+#gear.ink:not(.focus) { color: var(--ink); }   /* light glass with a dark icon, like the clock */
 
 /* optional soft shade behind the text area (editor: Settings > Text) */
 #shade {
@@ -607,18 +673,6 @@ html, body {
 #shade.ink { background: linear-gradient(90deg, rgba(255, 255, 255, 0.6) 0%, rgba(255, 255, 255, 0.4) 32%, rgba(255, 255, 255, 0) 62%); }
 #shade.on { opacity: 1; }
 
-#dock.ink .head {
-  font-weight: 700;
-  color: rgba(14, 14, 20, 0.72);
-  text-shadow: 0 0 2px rgba(255, 255, 255, 0.95), 0 0 10px rgba(255, 255, 255, 0.85), 0 0 24px rgba(255, 255, 255, 0.7);
-}
-#dock.ink .cat.open .head { color: #0a0a10; }
-#dock.ink .label {
-  font-weight: 600;
-  color: #0a0a10;
-  text-shadow: 0 0 2px rgba(255, 255, 255, 0.95), 0 0 10px rgba(255, 255, 255, 0.85), 0 0 22px rgba(255, 255, 255, 0.7);
-}
-
 #dock.busy:not(.ink) .head {
   font-weight: 700;
   color: rgba(255, 255, 255, 0.78);
@@ -629,49 +683,6 @@ html, body {
   font-weight: 600;
   text-shadow: 0 0 2px rgba(0, 0, 0, 0.8), 0 0 10px rgba(0, 0, 0, 0.6), 0 0 22px rgba(0, 0, 0, 0.45);
 }
-#gear.ink:not(.focus) { background: rgba(255, 255, 255, 0.72); }
-
-/* ---------- settings button: the same glass as the clock capsule ---------- */
-#gear {
-  top: 60px;
-  width: 84px; height: 84px;
-  border-radius: 42px;   /* no overflow: hidden, it would cut off the glass's 1px overhang (.gcv) */
-  color: #fff;
-  background: linear-gradient(155deg, rgba(255, 255, 255, 0.20), rgba(255, 255, 255, 0.06) 45%, rgba(255, 255, 255, 0.12));
-  box-shadow:
-    inset 0 1.5px 0 rgba(255, 255, 255, 0.55),
-    inset 0 -1.5px 0 rgba(255, 255, 255, 0.14),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.12),
-    0 14px 30px rgba(0, 0, 0, 0.55);
-}
-#gear .sheen {
-  position: absolute;
-  left: 10px; right: 10px; top: 3px;
-  height: 34px;
-  border-radius: 50% 50% 50% 50% / 80% 80% 20% 20%;   /* a dome that sits inside the round button */
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.26), rgba(255, 255, 255, 0));
-  pointer-events: none;
-}
-#gear svg { position: relative; width: 34px; height: 34px; opacity: 0.92; }
-#gear.focus {
-  color: #fff;
-  background: linear-gradient(145deg, #8b5cff, #e05bd8);
-  box-shadow: 0 0 24px rgba(160, 100, 255, 0.55), 0 14px 30px rgba(0, 0, 0, 0.55);
-  transform: scale(1.08);
-}
-#gear.focus .gcv { opacity: 0; }
-#gear.focus svg { opacity: 1; }
-/* on light pictures: light glass with a dark icon, exactly like the clock */
-#gear.ink:not(.focus) {
-  color: #14141a;
-  background: linear-gradient(155deg, rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0.5) 45%, rgba(255, 255, 255, 0.62));
-  box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, 0.9), inset 0 0 0 1px rgba(0, 0, 0, 0.08), 0 14px 30px rgba(0, 0, 0, 0.18);
-}
-#gear.ink:not(.focus) .gcv { opacity: 1; }
-
-/* ---------- dark text: a subtler white glow ---------- */
-#dock.ink .head { text-shadow: 0 0 1px rgba(255, 255, 255, 0.6), 0 0 8px rgba(255, 255, 255, 0.4); }
-#dock.ink .label { text-shadow: 0 0 1px rgba(255, 255, 255, 0.6), 0 0 8px rgba(255, 255, 255, 0.45); }
 
 /* ---------- idle dim: one dark layer over everything, so every part dims evenly
    (fading parts separately left the glass panels lighter than the dimmed picture) ---------- */

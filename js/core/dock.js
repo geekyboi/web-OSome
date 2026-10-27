@@ -320,7 +320,8 @@ function placeGear() {
   var g = $('gear'), st = $('status');
   var empty = !pluginsIn('status').length && !st.querySelector('.house.bad');
   if (st.classList.contains('empty') !== empty) { st.classList.toggle('empty', empty); }
-  var right = (empty ? 96 : 96 + st.offsetWidth + 20) + 'px';
+  var edge = 90;   // the screen's side margin, --edge-x in css/style.css
+  var right = (empty ? edge : edge + st.offsetWidth + 20) + 'px';
   if (!g || g.style.right === right) { return false; }
   g.style.right = right;
   return true;

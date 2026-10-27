@@ -3,15 +3,12 @@
 /* ---------- now playing on the amplifier (MusicCast) ---------- */
 #nowplaying {
   position: absolute;
-  right: 96px; top: 176px;               /* top is set by js/core/plugins.js (the right-hand column) */
-  width: 560px; height: 132px;           /* as wide as the calendar */
+  right: var(--edge-x); top: 168px;      /* top is set by js/core/plugins.js (the right-hand column) */
+  width: 560px; height: 132px;           /* as wide as the calendar, as tall as an app icon */
   padding: 14px 16px 14px 14px;
-  border-radius: 36px;
-  background: linear-gradient(120deg, rgba(22, 14, 40, 0.45), rgba(40, 24, 66, 0.32) 55%, rgba(255, 255, 255, 0.10));
-  box-shadow:
-    inset 0 1.5px 0 rgba(255, 255, 255, 0.4),
-    inset 0 0 0 1.5px rgba(255, 255, 255, 0.14),
-    0 14px 30px rgba(0, 0, 0, 0.5);
+  border-radius: var(--r-panel);
+  background: var(--glass);
+  box-shadow: var(--glass-edge), var(--lift);
   display: none;
   align-items: center;
   gap: 20px;
@@ -21,9 +18,9 @@
 #nowplaying .sheen {
   position: absolute;
   left: 14px; right: 14px; top: 3px;
-  height: 44px;
-  border-radius: 34px 34px 20px 20px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0));
+  height: 48px;
+  border-radius: 34px 34px 22px 22px;
+  background: var(--sheen);
 }
 #nowplaying .npdisc, #nowplaying .nptitles, #nowplaying .npright { position: relative; }   /* above the glass */
 
@@ -41,7 +38,7 @@
   color: rgba(255, 255, 255, 0.6);
 }
 /* a new song: the disc turns once, and the new art goes on while it's moving */
-#nowplaying .npflip.go { animation: np-turn 0.75s cubic-bezier(0.3, 0.7, 0.2, 1); }
+#nowplaying .npflip.go { animation: np-turn 0.75s var(--ease); }
 @keyframes np-turn { to { transform: rotate(360deg); } }
 #npimg { position: absolute; left: 0; top: 0; width: 100%; height: 100%; object-fit: cover; display: none; }
 #nowplaying.hasart #npimg { display: block; }
@@ -57,25 +54,25 @@
 }
 
 /* song, artist and album: the old lines slide out and the new ones slide up in */
-#nowplaying .nptitles { flex: 1; min-width: 0; height: 92px; overflow: hidden; }
+#nowplaying .nptitles { flex: 1; min-width: 0; height: 104px; overflow: hidden; }
 #nowplaying .nptl { position: absolute; left: 0; right: 0; top: 0; bottom: 0; display: flex; flex-direction: column; justify-content: center; }   /* centred, two lines or three */
 #nowplaying .nptrack {
-  font-size: 27px; font-weight: 600; line-height: 1.2; color: #fff;
+  font-size: var(--fs-title); font-weight: 600; line-height: 1.2; color: #fff;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.35);
+  text-shadow: var(--shadow-text-glass);
 }
 #nowplaying .npartist {
-  font-size: 22px; line-height: 1.2; margin-top: 2px; color: rgba(255, 255, 255, 0.68);
+  font-size: var(--fs-meta); line-height: 1.2; margin-top: 1px; color: var(--t2);
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 #nowplaying .npalbum {
-  font-size: 19px; line-height: 1.2; margin-top: 2px; color: rgba(255, 255, 255, 0.5);
+  font-size: var(--fs-small); line-height: 1.2; margin-top: 1px; color: var(--t3);
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
-#nowplaying .nptl.in  { animation: np-in 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+#nowplaying .nptl.in  { animation: np-in var(--t-enter) var(--ease) both; }
 #nowplaying .nptl.out { animation: np-out 0.4s ease both; }
-@keyframes np-in  { from { transform: translateY(92px); opacity: 0; } to { transform: none; opacity: 1; } }
-@keyframes np-out { to { transform: translateY(-92px); opacity: 0; } }
+@keyframes np-in  { from { transform: translateY(104px); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes np-out { to { transform: translateY(-104px); opacity: 0; } }
 /* muted on the amp: a small icon before the artist */
 #nowplaying .npmute { display: none; vertical-align: -3px; margin-right: 6px; }
 #nowplaying.muted .npmute { display: inline-block; }
@@ -85,14 +82,14 @@
 #nowplaying .npright { flex: 0 0 auto; min-width: 124px; height: 60px; display: flex; align-items: center; justify-content: flex-end; }
 #nowplaying .npsrc {
   padding-right: 10px; white-space: nowrap;
-  font-size: 18px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.6);
-  transition: opacity 0.2s ease;
+  font-size: var(--fs-small); font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase;
+  color: var(--t3);
+  transition: opacity var(--t-fast) ease;
 }
 #nowplaying .npctl {
   position: absolute; right: 0; top: 0;
   display: flex; align-items: center; gap: 4px;
-  opacity: 0; transition: opacity 0.2s ease;
+  opacity: 0; transition: opacity var(--t-fast) ease;
 }
 #nowplaying.focus .npctl { opacity: 1; }
 #nowplaying.focus .npsrc { opacity: 0; }
@@ -102,18 +99,18 @@
   width: 60px; height: 60px; border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
   color: rgba(255, 255, 255, 0.92); cursor: pointer;
-  transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+  transition: transform var(--t-move) var(--ease);
 }
 #nowplaying .npb .lit {
   position: absolute; left: 0; top: 0; right: 0; bottom: 0;
   border-radius: 50%; opacity: 0; transform: scale(0.7);
-  background: linear-gradient(145deg, #8b5cff, #e05bd8);
-  box-shadow: 0 0 22px rgba(160, 100, 255, 0.55), 0 8px 18px rgba(0, 0, 0, 0.3);
-  transition: opacity 0.2s ease, transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+  background: var(--accent);
+  box-shadow: var(--focus-shadow);
+  transition: opacity var(--t-fast) ease, transform var(--t-move) var(--ease);
 }
 #nowplaying.focus .npb.on { transform: scale(1.08); color: #fff; }
 #nowplaying.focus .npb.on .lit { opacity: 1; transform: none; }
-#nowplaying .npb svg { position: absolute; transition: opacity 0.2s ease, transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1); }
+#nowplaying .npb svg { position: absolute; transition: opacity var(--t-fast) ease, transform var(--t-move) var(--ease); }
 /* both play/pause icons are there; the one that applies fades and grows in */
 #nowplaying .npb .ic-play { opacity: 0; transform: scale(0.6); }
 #nowplaying.paused .npb .ic-play { opacity: 1; transform: none; }
@@ -121,7 +118,7 @@
 #nowplaying.focus .npb.on.fire { animation: np-press 0.4s ease; }
 @keyframes np-press {
   0%   { transform: scale(1.08); }
-  35%  { transform: scale(0.92); }
+  35%  { transform: scale(1.02); }
   100% { transform: scale(1.08); }
 }
 /* the radio: no buttons (it can't be selected) */
@@ -129,13 +126,12 @@
 
 /* light background behind it: light glass, dark text */
 #nowplaying.ink {
-  background: linear-gradient(120deg, rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0.5) 55%, rgba(255, 255, 255, 0.62));
-  box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, 0.9), inset 0 0 0 1px rgba(0, 0, 0, 0.08), 0 14px 30px rgba(0, 0, 0, 0.18);
+  background: var(--glass-ink);
+  box-shadow: var(--glass-edge-ink), var(--lift-ink);
 }
 #nowplaying.ink .gcv { opacity: 1; }
-#nowplaying.ink .nptrack { color: #0e0e14; text-shadow: none; }
-#nowplaying.ink .npartist { color: rgba(14, 14, 20, 0.7); }
-#nowplaying.ink .npalbum { color: rgba(14, 14, 20, 0.5); }
-#nowplaying.ink .npsrc { color: rgba(14, 14, 20, 0.55); }
-#nowplaying.ink .npb { color: #0e0e14; }
+#nowplaying.ink .nptrack { color: var(--ink); text-shadow: none; }
+#nowplaying.ink .npartist { color: var(--ink-2); }
+#nowplaying.ink .npalbum, #nowplaying.ink .npsrc { color: var(--ink-3); }
+#nowplaying.ink .npb { color: var(--ink); }
 #nowplaying.ink.focus .npb.on { color: #fff; }
