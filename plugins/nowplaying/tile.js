@@ -1,6 +1,6 @@
 /* Now playing plugin: what the amplifier is playing (Yamaha MusicCast, read by this plugin's
    service.js). Asked every 3 s while the home screen is showing (8 s when nothing is playing).
-   A slim glass bar in the right-hand column: the album art as a disc, the song and the source.
+   A slim glass bar in the right-hand column: the album art as a disc, the song, artist and album, and the source.
    Right from the last app of a row selects it: play/pause and next take the source's place, the
    focus on play/pause; Right moves to next, and OK presses the lit one (streaming, USB,
    Bluetooth and CD; not the radio). */
@@ -32,7 +32,7 @@
     var box = api.root;
     if (!npShowing(np)) { npSong = ''; api.show(false); return; }
     var song = [np.track, np.artist, np.album].join('|');
-    if (song !== npSong) { setTitles(np.track || np.artist, np.track ? np.artist : '', !!npSong && box.classList.contains('show')); }
+    if (song !== npSong) { setTitles(np.track || np.artist, np.track ? np.artist : '', np.album || '', !!npSong && box.classList.contains('show')); }
     npSong = song;
     box.classList.toggle('paused', np.playback === 'pause');
     box.classList.toggle('muted', !!np.mute);
@@ -69,8 +69,8 @@
     api.show(true);
   }
   function setText(n, t) { if (n && n.textContent !== t) { n.textContent = t; } }
-  // Song and artist (with the mute icon before it). animate: the old pair slides up and out, the new one in.
-  function setTitles(t1, t2, animate) {
+  // Song, artist (with the mute icon before it) and album. animate: the old lines slide up and out, the new ones in.
+  function setTitles(t1, t2, t3, animate) {
     var host = api.root.querySelector('.nptitles');
     var old = host.querySelector('.nptl:not(.out)');
     var tl = api.util.el('div', 'nptl');
@@ -79,6 +79,7 @@
     artist.innerHTML = MUTE;
     artist.appendChild(document.createTextNode(t2));
     tl.appendChild(artist);
+    if (t3) { tl.appendChild(api.util.el('div', 'npalbum', t3)); }
     if (old && animate && !document.hidden) {
       old.classList.add('out');
       setTimeout(function () { if (old.parentNode) { old.parentNode.removeChild(old); } }, 420);

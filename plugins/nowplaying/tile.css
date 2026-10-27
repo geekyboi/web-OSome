@@ -56,9 +56,9 @@
   background: rgba(255, 255, 255, 0.28);
 }
 
-/* song and artist: the old pair slides out and the new one slides up in */
-#nowplaying .nptitles { flex: 1; min-width: 0; height: 64px; overflow: hidden; }
-#nowplaying .nptl { position: absolute; left: 0; right: 0; top: 0; }
+/* song, artist and album: the old lines slide out and the new ones slide up in */
+#nowplaying .nptitles { flex: 1; min-width: 0; height: 92px; overflow: hidden; }
+#nowplaying .nptl { position: absolute; left: 0; right: 0; top: 0; bottom: 0; display: flex; flex-direction: column; justify-content: center; }   /* centred, two lines or three */
 #nowplaying .nptrack {
   font-size: 27px; font-weight: 600; line-height: 1.2; color: #fff;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
@@ -68,10 +68,14 @@
   font-size: 22px; line-height: 1.2; margin-top: 2px; color: rgba(255, 255, 255, 0.68);
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
+#nowplaying .npalbum {
+  font-size: 19px; line-height: 1.2; margin-top: 2px; color: rgba(255, 255, 255, 0.5);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
 #nowplaying .nptl.in  { animation: np-in 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
 #nowplaying .nptl.out { animation: np-out 0.4s ease both; }
-@keyframes np-in  { from { transform: translateY(66px); opacity: 0; } to { transform: none; opacity: 1; } }
-@keyframes np-out { to { transform: translateY(-66px); opacity: 0; } }
+@keyframes np-in  { from { transform: translateY(92px); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes np-out { to { transform: translateY(-92px); opacity: 0; } }
 /* muted on the amp: a small icon before the artist */
 #nowplaying .npmute { display: none; vertical-align: -3px; margin-right: 6px; }
 #nowplaying.muted .npmute { display: inline-block; }
@@ -131,6 +135,7 @@
 #nowplaying.ink .gcv { opacity: 1; }
 #nowplaying.ink .nptrack { color: #0e0e14; text-shadow: none; }
 #nowplaying.ink .npartist { color: rgba(14, 14, 20, 0.7); }
+#nowplaying.ink .npalbum { color: rgba(14, 14, 20, 0.5); }
 #nowplaying.ink .npsrc { color: rgba(14, 14, 20, 0.55); }
 #nowplaying.ink .npb { color: #0e0e14; }
 #nowplaying.ink.focus .npb.on { color: #fff; }

@@ -371,7 +371,7 @@ Times show in the TV's time zone in 24-hour format, for example "Today · 19:00"
 
 ## 8. Now playing on a Yamaha MusicCast amplifier (needs the web editor's service)
 
-A slim glass bar on the right, under the calendar, shows what the amplifier is playing: the track and artist, with the artwork as a disc (it turns once when the song changes), and the source (Spotify, AirPlay, Net Radio, Bluetooth, USB and so on). DAB/FM radio shows the station name and the scrolling text. CD shows the track. The bar hides while the amp is in standby, stopped, or on the TV or another HDMI input.
+A slim glass bar on the right, under the calendar, shows what the amplifier is playing: the track, artist and album, with the artwork as a disc (it turns once when the song changes), and the source (Spotify, AirPlay, Net Radio, Bluetooth, USB and so on). DAB/FM radio shows the station name and the scrolling text. CD shows the track. The bar hides while the amp is in standby, stopped, or on the TV or another HDMI input.
 
 To play, pause or skip, press Right on the last app in a row to select the bar. Play/pause and next take the source's place, with play/pause lit pink. Right for next, then OK. Left from play/pause, or Back, goes back to the app you were on. This works for streaming, USB, Bluetooth and CD, not the radio.
 
