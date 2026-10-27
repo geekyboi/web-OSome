@@ -1,13 +1,13 @@
 /* Now playing plugin: what the amplifier is playing (Yamaha MusicCast, read by this plugin's
    service.js). Asked every 3 s while the home screen is showing (8 s when nothing is playing).
-   The album art as a disc on the right of a glass card, in the right-hand column. Right from
-   the last app of a row selects it, on play/pause; Left and Right move to previous and next,
-   and OK presses the lit one (streaming, USB, Bluetooth and CD; not the radio). */
+   The album art as a disc on the left of a glass card, in the right-hand column. Right from
+   the last app of a row selects it, on the disc (play/pause); Right moves on to previous and
+   next, and OK presses the lit one (streaming, USB, Bluetooth and CD; not the radio). */
 (function () {
   'use strict';
   var api = null;
   var np = null, npTimer = null, npArt = '', npSong = '', npDir = 'up', skipAt = 0;
-  var CTL = ['previous', 'play', 'next'], ctl = 1;   // the lit button while the card has the focus
+  var CTL = ['play', 'previous', 'next'], ctl = 0;   // the lit button while the card has the focus
   function npShowing(n) {
     return !!(n && n.power === 'on' && n.source !== 'other' && n.playback !== 'stop' && (n.track || n.artist));
   }
@@ -84,10 +84,12 @@
     host.appendChild(tl);
     npDir = 'up';
   }
-  // Light up button i (0 previous, 1 play/pause, 2 next).
+  // The controls in order: the disc (play/pause), previous, next.
+  function controls() { return api.root.querySelectorAll('.npdisc, .npb'); }
+  // Light up control i (0 the disc, 1 previous, 2 next).
   function setCtl(i) {
     ctl = Math.max(0, Math.min(CTL.length - 1, i));
-    Array.prototype.forEach.call(api.root.querySelectorAll('.npb'), function (b, j) { b.classList.toggle('on', j === ctl); });
+    Array.prototype.forEach.call(controls(), function (b, j) { b.classList.toggle('on', j === ctl); });
   }
   // OK on the lit button. Play/pause swaps its icon straight away; then the amp is asked again to confirm.
   function press() {
@@ -101,7 +103,7 @@
       npDir = want === 'next' ? 'up' : 'down';
       skipAt = Date.now();
     }
-    var btn = api.root.querySelectorAll('.npb')[ctl];
+    var btn = controls()[ctl];
     btn.classList.remove('fire'); void btn.offsetWidth; btn.classList.add('fire');
     clearTimeout(btn.fireTimer);
     btn.fireTimer = setTimeout(function () { btn.classList.remove('fire'); }, 450);
@@ -129,18 +131,18 @@
     attrs: { id: 'nowplaying', 'aria-label': 'Now playing' },
     glass: '.npcard',
     tone: 'music',
-    html: '<div class="npcard">' +
+    html: '<div class="npdisc" role="button" aria-label="Play or pause"><div class="npflip">' +
+        '<svg class="npnote" viewBox="0 0 24 24" width="64" height="64" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18V5l11-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="17" cy="16" r="3"></circle></svg>' +
+        '<img id="npimg" alt="">' +
+      '</div><span class="nppp">' + ICON_PLAY + '</span></div>' +
+      '<div class="npcard">' +
         '<div class="nphead">' +
           '<div class="nptitles"></div>' +
           '<svg class="npmute" viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-label="Muted"><path d="M11 5 6 9H3v6h3l5 4z" fill="currentColor"></path><path d="m22 9-6 6M16 9l6 6"></path></svg>' +
         '</div>' +
-        '<div class="npctl">' + button('prev', 'Previous song', ICON_PREV) + button('play', 'Play or pause', ICON_PLAY) + button('next', 'Next song', ICON_NEXT) + '</div>' +
+        '<div class="npctl">' + button('prev', 'Previous song', ICON_PREV) + button('next', 'Next song', ICON_NEXT) + '</div>' +
         '<div class="npsrc"></div>' +
-      '</div>' +
-      '<div class="npdisc"><div class="npflip">' +
-        '<svg class="npnote" viewBox="0 0 24 24" width="64" height="64" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18V5l11-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="17" cy="16" r="3"></circle></svg>' +
-        '<img id="npimg" alt="">' +
-      '</div></div>',
+      '</div>',
 
     // the setting saved before plugins (musiccastHost)
     migrate: function (s) { return s.musiccastHost !== undefined ? { host: s.musiccastHost || '' } : null; },
@@ -148,10 +150,10 @@
     start: function (a) {
       api = a;
       // Magic Remote pointer: the button under it lights up (the click is OK)
-      Array.prototype.forEach.call(api.root.querySelectorAll('.npb'), function (b, i) {
+      Array.prototype.forEach.call(controls(), function (b, i) {
         b.addEventListener('mouseenter', function () { setCtl(i); });
       });
-      setCtl(1);
+      setCtl(0);
       pollNow();
     },
     stop: function () { clearTimeout(npTimer); api = null; },
@@ -159,16 +161,16 @@
     onShow: function () { pollNow(); },           // back on screen: ask straight away
     onSettings: function () { pollNow(); },
     canFocus: function () { return canControl(); },   // the radio: nothing to select
-    // lands on play/pause (or, with the pointer, the button it's over)
+    // lands on the disc (or, with the pointer, the control it's over)
     onFocus: function (on) {
       if (!on) { return; }
-      var over = api.root.querySelector('.npb:hover');
-      setCtl(over ? Array.prototype.indexOf.call(api.root.querySelectorAll('.npb'), over) : 1);
+      var over = api.root.querySelector('.npdisc:hover, .npb:hover');
+      setCtl(over ? Array.prototype.indexOf.call(controls(), over) : 0);
     },
     onKey: function (k) {
       if (k === TVHOME.KEY.LEFT && ctl > 0) { setCtl(ctl - 1); return true; }
       if (k === TVHOME.KEY.RIGHT) { if (ctl < CTL.length - 1) { setCtl(ctl + 1); } return true; }
-      return false;                               // Left from previous: back to the apps
+      return false;                               // Left from the disc: back to the apps
     },
     onOk: function () { press(); }
   });
