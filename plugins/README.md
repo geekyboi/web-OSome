@@ -62,7 +62,7 @@ TVHOME.plugin({
   region: 'right',             // 'status' (the capsule), 'right' (the column) or 'stage' (its CSS places it)
   tag: 'aside',                // the tile's element (default section)
   attrs: { id: 'agenda' },     // attributes for it
-  glass: true,                 // the blurred-glass background, like the other panels ('.card': on that element inside it instead)
+  glass: true,                 // the blurred-glass background, like the other panels
   tone: 'agenda',              // dark text (.ink) where the picture behind is light: greet, status, agenda or music
   busy: true,                  // also .busy over busy pictures
   html: '<ol id="events"></ol>',

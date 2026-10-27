@@ -109,13 +109,10 @@ function mountPlugin(p) {
   var d = p.def, m = p.meta;
   var root = el(d.tag || 'section', 'plugin plugin-' + m.id + (d.className ? ' ' + d.className : ''));
   Object.keys(d.attrs || {}).forEach(function (k) { root.setAttribute(k, d.attrs[k]); });
-  if (d.glass === true) { root.innerHTML = '<canvas class="gcv"></canvas><span class="sheen"></span>'; }
+  if (d.glass) { root.innerHTML = '<canvas class="gcv"></canvas><span class="sheen"></span>'; }
   if (d.html) { root.insertAdjacentHTML('beforeend', d.html); }
   p.root = root;
-  // glass: a selector puts the glass on that element inside the tile instead of the whole tile
-  p.glassNode = typeof d.glass === 'string' ? root.querySelector(d.glass) : (d.glass ? root : null);
-  if (p.glassNode && p.glassNode !== root) { p.glassNode.insertAdjacentHTML('afterbegin', '<canvas class="gcv"></canvas><span class="sheen"></span>'); }
-  p.glass = p.glassNode ? p.glassNode.querySelector('canvas.gcv') : null;
+  p.glass = d.glass ? root.querySelector('canvas.gcv') : null;
   p.region = d.region === 'status' || d.region === 'right' ? d.region : 'stage';
   // in its region, in order
   var after = pluginsIn(p.region).filter(function (q) { return pluginOrder(q) > pluginOrder(p); })[0];
