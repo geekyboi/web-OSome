@@ -1,8 +1,9 @@
 /* Now playing plugin: what the amplifier is playing (Yamaha MusicCast, read by this plugin's
    service.js). Asked every 3 s while the home screen is showing (8 s when nothing is playing).
-   A slim glass bar in the right-hand column: the album art as a disc, the song, and play/pause
-   and next. Right from the last app of a row selects it, on play/pause; Right moves to next,
-   and OK presses the lit one (streaming, USB, Bluetooth and CD; not the radio). */
+   A slim glass bar in the right-hand column: the album art as a disc, the song and the source.
+   Right from the last app of a row selects it: play/pause and next take the source's place, the
+   focus on play/pause; Right moves to next, and OK presses the lit one (streaming, USB,
+   Bluetooth and CD; not the radio). */
 (function () {
   'use strict';
   var api = null;
@@ -36,7 +37,7 @@
     box.classList.toggle('paused', np.playback === 'pause');
     box.classList.toggle('muted', !!np.mute);
     box.classList.toggle('nocontrol', !canControl());
-    // no buttons (the radio): the source goes where they would be
+    // the source; the buttons take its place while the bar is selected
     setText(box.querySelector('.npsrc'), np.inputName || '');
     if (np.art !== npArt) {
       npArt = np.art;
@@ -131,8 +132,9 @@
         '<img id="npimg" alt="">' +
       '</div></div>' +
       '<div class="nptitles"></div>' +
-      '<div class="npctl">' + button('play', 'Play or pause', ICON_PLAY) + button('next', 'Next song', ICON_NEXT) + '</div>' +
-      '<div class="npsrc"></div>',
+      '<div class="npright"><div class="npsrc"></div>' +
+        '<div class="npctl">' + button('play', 'Play or pause', ICON_PLAY) + button('next', 'Next song', ICON_NEXT) + '</div>' +
+      '</div>',
 
     // the setting saved before plugins (musiccastHost)
     migrate: function (s) { return s.musiccastHost !== undefined ? { host: s.musiccastHost || '' } : null; },

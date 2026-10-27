@@ -25,7 +25,7 @@
   border-radius: 34px 34px 20px 20px;
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0));
 }
-#nowplaying .npdisc, #nowplaying .nptitles, #nowplaying .npctl, #nowplaying .npsrc { position: relative; }   /* above the glass */
+#nowplaying .npdisc, #nowplaying .nptitles, #nowplaying .npright { position: relative; }   /* above the glass */
 
 /* the disc: the album art in a circle with a light edge and a see-through centre */
 #nowplaying .npdisc {
@@ -76,9 +76,23 @@
 #nowplaying .npmute { display: none; vertical-align: -3px; margin-right: 6px; }
 #nowplaying.muted .npmute { display: inline-block; }
 
-/* play/pause and next: plain icons; selected (Right from the last app of a row), the lit one
-   sits on the pink like the settings button */
-#nowplaying .npctl { flex: 0 0 auto; display: flex; align-items: center; gap: 4px; }
+/* the right-hand end: the source (Spotify, AirPlay, Net Radio…), and in its place while the bar
+   is selected (Right from the last app of a row), play/pause and next */
+#nowplaying .npright { flex: 0 0 auto; min-width: 124px; height: 60px; display: flex; align-items: center; justify-content: flex-end; }
+#nowplaying .npsrc {
+  padding-right: 10px; white-space: nowrap;
+  font-size: 18px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.6);
+  transition: opacity 0.2s ease;
+}
+#nowplaying .npctl {
+  position: absolute; right: 0; top: 0;
+  display: flex; align-items: center; gap: 4px;
+  opacity: 0; transition: opacity 0.2s ease;
+}
+#nowplaying.focus .npctl { opacity: 1; }
+#nowplaying.focus .npsrc { opacity: 0; }
+/* the lit button sits on the pink like the settings button */
 #nowplaying .npb {
   position: relative;
   width: 60px; height: 60px; border-radius: 50%;
@@ -106,14 +120,8 @@
   35%  { transform: scale(0.92); }
   100% { transform: scale(1.08); }
 }
-/* the radio: no buttons, the source in their place */
-#nowplaying .npsrc {
-  display: none; flex: 0 0 auto; padding-right: 10px;
-  font-size: 18px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.6);
-}
+/* the radio: no buttons (it can't be selected) */
 #nowplaying.nocontrol .npctl { display: none; }
-#nowplaying.nocontrol .npsrc { display: block; }
 
 /* light background behind it: light glass, dark text */
 #nowplaying.ink {
