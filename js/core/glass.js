@@ -49,8 +49,8 @@ function stagePos(node) {
   return { x: x, y: y };
 }
 
-// Paint glass canvas cv with the patch of the scene behind node (lighter for .ink panels).
-function paintOne(cv, node) {
+// Paint glass canvas cv with the patch of the scene behind node (lighter for .ink panels, or if ink is true).
+function paintOne(cv, node, ink) {
   var w = node.offsetWidth, h = node.offsetHeight;
   var p = stagePos(node);
   var cw = Math.max(8, Math.round(w / 4)), ch = Math.max(8, Math.round(h / 4));
@@ -62,7 +62,7 @@ function paintOne(cv, node) {
   if (!scene) { return; }
   ctx.drawImage(scene, p.x / SCALE, p.y / SCALE, w / SCALE, h / SCALE, 0, 0, cw, ch);
   // light glass (.ink): frost the blurred copy itself, so the blur still shows through the white
-  if (node.classList.contains('ink')) {
+  if (ink || node.classList.contains('ink')) {
     var g = ctx.createLinearGradient(0, 0, cw, ch);
     g.addColorStop(0, 'rgba(255, 255, 255, 0.72)');
     g.addColorStop(0.45, 'rgba(255, 255, 255, 0.5)');
@@ -79,7 +79,7 @@ function paintGlass() {
   // plugins with glass: the ones showing
   Object.keys(plugins).forEach(function (k) {
     var p = plugins[k];
-    if (p.state === 'on' && p.glass && p.root.offsetWidth) { paintOne(p.glass, p.root); }
+    if (p.state === 'on' && p.glass && p.root.offsetWidth) { paintOne(p.glass, p.glassNode, p.root.classList.contains('ink')); }
   });
 }
 

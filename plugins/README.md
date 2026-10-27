@@ -62,7 +62,7 @@ TVHOME.plugin({
   region: 'right',             // 'status' (the capsule), 'right' (the column) or 'stage' (its CSS places it)
   tag: 'aside',                // the tile's element (default section)
   attrs: { id: 'agenda' },     // attributes for it
-  glass: true,                 // the blurred-glass background, like the other panels
+  glass: true,                 // the blurred-glass background, like the other panels ('.card': on that element inside it instead)
   tone: 'agenda',              // dark text (.ink) where the picture behind is light: greet, status, agenda or music
   busy: true,                  // also .busy over busy pictures
   html: '<ol id="events"></ol>',
@@ -77,6 +77,7 @@ TVHOME.plugin({
   onOk: function () { },       // 'right' only: the tile can be selected (Right from the last app of a row), and OK was pressed
   canFocus: function () { return true; },  // with onOk: can it be selected just now?
   onFocus: function (on) { },  // with onOk: it was selected (class focus) or left
+  onKey: function (keyCode) { return false; },  // with onOk: a key while it's selected; true if it used it (e.g. Left/Right between its buttons)
   shrink: function () { return false; },   // 'right' only: the column is too full, take less room (true if it did)
   unshrink: function () { },
   migrate: function (oldSettings) { return null; }   // settings from before plugins, if any
