@@ -33,6 +33,10 @@ plugins/calendar/
 
 The folder name is the plugin's id: lower-case letters, digits, `-` and `_`.
 
+In `tile.css`, use the shared look defined at the top of `css/style.css` (`var(--glass)`, `var(--fs-title)`,
+`var(--accent)` and so on) rather than your own colours and sizes, so the tile matches the rest of the screen.
+`example-plugins/hello/tile.css` shows a glass panel built from them.
+
 ### plugin.json
 
 ```json

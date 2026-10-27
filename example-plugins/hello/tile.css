@@ -1,35 +1,32 @@
-/* Hello, world! plugin. The position (top) is set by TV Home; the rest is up to the plugin. */
+/* Hello, world! plugin. The position (top) is set by TV Home; the rest is up to the plugin.
+   The var(--...) values are the shared look, defined at the top of css/style.css. */
 #hello {
   position: absolute;
-  right: 96px; top: 176px;
+  right: var(--edge-x); top: 168px;
   width: 560px;
-  padding: 24px 34px 26px;
-  border-radius: 36px;
-  background: linear-gradient(155deg, rgba(255, 255, 255, 0.20), rgba(255, 255, 255, 0.06) 45%, rgba(255, 255, 255, 0.12));
-  box-shadow:
-    inset 0 1.5px 0 rgba(255, 255, 255, 0.55),
-    inset 0 -1.5px 0 rgba(255, 255, 255, 0.14),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.12),
-    0 14px 30px rgba(0, 0, 0, 0.55);
+  padding: 26px 30px 30px;
+  border-radius: var(--r-panel);
+  background: var(--glass);
+  box-shadow: var(--glass-edge), var(--lift);
   display: none;
 }
 #hello.show { display: block; }
 #hello .sheen {
   position: absolute;
   left: 14px; right: 14px; top: 3px;
-  height: 56px;
+  height: 48px;
   border-radius: 34px 34px 22px 22px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0));
+  background: var(--sheen);
 }
 #hello .hello-title, #hello .hello-sub { position: relative; }
-#hello .hello-title { font-size: 34px; font-weight: 600; color: #fff; text-shadow: 0 1px 8px rgba(0, 0, 0, 0.35); }
-#hello .hello-sub { font-size: 23px; color: rgba(255, 255, 255, 0.7); margin-top: 6px; }
+#hello .hello-title { font-size: var(--fs-title); font-weight: 600; color: #fff; text-shadow: var(--shadow-text-glass); }
+#hello .hello-sub { font-size: var(--fs-meta); color: var(--t2); margin-top: 6px; }
 
 /* light picture behind it: light glass, dark text (like the other panels) */
 #hello.ink {
-  background: linear-gradient(155deg, rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0.5) 45%, rgba(255, 255, 255, 0.62));
-  box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, 0.9), inset 0 0 0 1px rgba(0, 0, 0, 0.08), 0 14px 30px rgba(0, 0, 0, 0.18);
+  background: var(--glass-ink);
+  box-shadow: var(--glass-edge-ink), var(--lift-ink);
 }
 #hello.ink .gcv { opacity: 1; }
-#hello.ink .hello-title { color: #0e0e14; text-shadow: none; }
-#hello.ink .hello-sub { color: rgba(14, 14, 20, 0.7); }
+#hello.ink .hello-title { color: var(--ink); text-shadow: none; }
+#hello.ink .hello-sub { color: var(--ink-2); }
