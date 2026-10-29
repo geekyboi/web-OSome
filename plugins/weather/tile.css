@@ -5,13 +5,13 @@
 #wx { position: relative; display: none; align-items: center; gap: 14px; color: #fff; transition: opacity 0.6s ease; }
 #wx.out { opacity: 0; transition-duration: 0.4s; }   /* new weather: fade out, swap, fade in (tile.js) */
 #status.wide #wx { display: flex; }
-#status.wide #time { font-size: 46px; padding-left: 0; }
+#status.wide #time { font-size: var(--fs-display); padding-left: 0; }
 #wx svg { display: block; flex: none; }
 #wx .wxnow { display: flex; align-items: center; gap: 7px; }
 #wx .wxnow b { font-size: 31px; font-weight: 400; letter-spacing: 0.01em; }
 #wx .wxsep { width: 1px; height: 42px; background: rgba(255, 255, 255, 0.22); }
 #wx .wxh { display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 20px; }
-#wx .wxh small { font-size: 15px; color: rgba(255, 255, 255, 0.62); letter-spacing: 0.02em; }
+#wx .wxh small { font-size: 15px; color: var(--t2); letter-spacing: 0.02em; }
 #wx .wxh > span { display: flex; align-items: center; gap: 4px; }
 /* fixed slots, so nothing moves when the numbers change (the font's digits differ in width);
    sized for up to "20°", a rarer "-10°" just widens its slot a little */
@@ -65,8 +65,8 @@
 #wx .drop { color: #8cc8ff; }
 #wx .flake { color: #e8f2ff; stroke-width: 2.6; }
 #wx .bolt { color: #ffd166; }
-#status.ink #wx { color: #14141a; }
-#status.ink #wx .wxh small { color: rgba(14, 14, 20, 0.6); }
+#status.ink #wx { color: var(--ink); }
+#status.ink #wx .wxh small { color: var(--ink-2); }
 #status.ink #wx .wxsep { background: rgba(0, 0, 0, 0.16); }
 #status.ink #wx .sun, #status.ink #wx .bolt { color: #c98500; }
 #status.ink #wx .drop { color: #1f6fc0; }

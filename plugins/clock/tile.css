@@ -2,7 +2,7 @@
 #time {
   position: relative;
   font-weight: 300;
-  font-size: 46px;
+  font-size: var(--fs-display);
   line-height: 1;
   letter-spacing: -0.03em;            /* digits a little closer together */
   font-variant-numeric: tabular-nums;
@@ -17,8 +17,7 @@
 @keyframes colon-on  { from { opacity: 0.55; } to { opacity: 1; } }
 @keyframes colon-off { from { opacity: 1; } to { opacity: 0.55; } }
 #time .dg { display: inline-block; width: 0.57em; text-align: center; font-style: normal; letter-spacing: 0; }   /* same width for every digit, so the colon never moves */
-#time { text-shadow: 0 2px 16px rgba(0, 0, 0, 0.45); }
+#time { text-shadow: var(--shadow-text); }
 /* light background behind the capsule: dark digits */
-#status.ink #time { color: #0e0e14; text-shadow: none; }
-#status.ink #time { font-weight: 500; }
+#status.ink #time { color: var(--ink); text-shadow: none; font-weight: 500; }
 #status.ink #time .colon { font-weight: 600; }   /* a step heavier than the digits, as on dark */

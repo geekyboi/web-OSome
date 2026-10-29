@@ -1,7 +1,7 @@
 /* Now playing plugin, the service part: what a Yamaha MusicCast amplifier is playing. The TV
    asks every few seconds while the home screen is showing; answers are shared for a moment
    so the TV and editors don't each hit the amplifier. Also passes the album art through
-   (the TV app loads it from here). Settings: { host }. Plain ES5. */
+   (the TV app loads it from here), and plays or pauses for the TV. Settings: { host }. Plain ES5. */
 'use strict';
 var musiccast = require('./musiccast.js');
 
@@ -31,6 +31,15 @@ module.exports = {
 
     // the TV app: { configured, now: { power, inputName, source, playback, track, artist, album, art, playTime, totalTime }, error }
     api.method('now', function (params, reply) { ampNow(reply); });
+    // the TV app's buttons: { playback: 'play' | 'pause' | 'next' | 'previous' }
+    api.method('playback', function (params, reply) {
+      var host = api.settings().host || '';
+      var now = amp.host === host && amp.result && amp.result.now;
+      musiccast.setPlayback(host, now && now.source === 'cd' ? 'cd' : 'netusb', params.playback, function (err) {
+        amp.at = 0;                                // the next 'now' asks the amp again
+        reply(err ? { returnValue: false, errorText: err.message } : { returnValue: true });
+      });
+    });
     // album art from the amplifier, for the TV app (and the editor)
     api.route('GET', 'art/', function (req, res, q, rest) {
       musiccast.pipeArt(api.settings().host || '', rest, res);

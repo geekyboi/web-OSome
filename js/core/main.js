@@ -65,9 +65,11 @@ document.addEventListener('keydown', function (e) {
   if (onGear) {
     if (k === KEY.DOWN) { e.preventDefault(); setGear(false); if (cur.c < 0 && cats.length) { select(homeCat, 0); } }
     else if (k === KEY.ENTER) { e.preventDefault(); openSettings(); }
-    else if (k === KEY.LEFT || k === KEY.RIGHT || k === KEY.UP || k === KEY.BACK || k === KEY.ESC) { e.preventDefault(); }
+    else if (k === KEY.RIGHT) { e.preventDefault(); focusPluginTile(0); }
+    else if (k === KEY.LEFT || k === KEY.UP || k === KEY.BACK || k === KEY.ESC) { e.preventDefault(); }
     return;
   }
+  if (tileFocus) { if (tileKey(k)) { e.preventDefault(); } return; }
   if (!cats.length) { if (k === KEY.UP) { e.preventDefault(); setGear(true); } return; }
   if (k === KEY.LEFT || k === KEY.RIGHT || k === KEY.UP || k === KEY.DOWN) {
     e.preventDefault();

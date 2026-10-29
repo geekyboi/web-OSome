@@ -33,6 +33,10 @@ plugins/calendar/
 
 The folder name is the plugin's id: lower-case letters, digits, `-` and `_`.
 
+In `tile.css`, use the shared look defined at the top of `css/style.css` (`var(--glass)`, `var(--fs-title)`,
+`var(--accent)` and so on) rather than your own colours and sizes, so the tile matches the rest of the screen.
+`example-plugins/hello/tile.css` shows a glass panel built from them.
+
 ### plugin.json
 
 ```json
@@ -74,6 +78,10 @@ TVHOME.plugin({
   onShow: function () { },     // TV Home came back to the front
   onReady: function () { },    // the service has connected
   onSettings: function () { }, // the settings changed (web editor)
+  onOk: function () { },       // 'right' only: the tile can be selected (Right from the last app of a row), and OK was pressed
+  canFocus: function () { return true; },  // with onOk: can it be selected just now?
+  onFocus: function (on) { },  // with onOk: it was selected (class focus) or left
+  onKey: function (keyCode) { return false; },  // with onOk: a key while it's selected; true if it used it (e.g. Left/Right between its buttons)
   shrink: function () { return false; },   // 'right' only: the column is too full, take less room (true if it did)
   unshrink: function () { },
   migrate: function (oldSettings) { return null; }   // settings from before plugins, if any

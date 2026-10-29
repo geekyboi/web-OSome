@@ -77,11 +77,13 @@ function makeApi(p) {
         root.classList.remove('leaving');
         if (!leaving) { root.classList.add('show'); tileFlash(root, 'enter', TILE_IN); }
       } else if (tilesAnimate()) {
+        if (tileFocus === p) { setTileFocus(null); }   // the focus goes back to the app it came from
         // fade out first, then close the gap
         root.classList.add('leaving');
         p.fadeTimer = setTimeout(function () { root.classList.remove('show', 'leaving'); layoutRegion(p.region); }, TILE_OUT);
         return true;
       } else {
+        if (tileFocus === p) { setTileFocus(null); }
         root.classList.remove('show');
       }
       layoutRegion(p.region);
@@ -117,6 +119,11 @@ function mountPlugin(p) {
   var host = p.region === 'status' ? $('status') : $('shift');
   host.insertBefore(root, after ? after.root : (p.region === 'status' ? null : $('gear')));
   p.state = 'on';
+  if (typeof d.onOk === 'function') {
+    // Magic Remote pointer: hover selects the tile, click is OK
+    onHover(root, function () { if (focusablePlugins().indexOf(p) >= 0) { setTileFocus(p); } });
+    root.addEventListener('click', function () { if (focusablePlugins().indexOf(p) >= 0) { setTileFocus(p); okTile(p); } });
+  }
   p.api = d.api = makeApi(p);
   pluginCall(p, 'start', [p.api]);
   var now = new Date();
@@ -131,6 +138,7 @@ function unloadPlugin(id) {
   var p = plugins[id];
   if (!p) { return; }
   delete plugins[id];
+  if (tileFocus === p) { setTileFocus(null); }
   if (p.state === 'on') { pluginCall(p, 'stop'); }
   clearTimeout(p.fadeTimer);
   p.state = 'off';
@@ -244,7 +252,7 @@ function pluginsLoading() {
    right:  the column under it, stacked in order with 24px between; if they don't all fit,
            plugins with shrink() give up some space (the calendar shows fewer events)
    stage:  anywhere on the screen; the plugin's CSS places it (the greeting) */
-var COL_TOP = 176, COL_BOTTOM = 1030, COL_GAP = 24;
+var COL_TOP = 168, COL_BOTTOM = 1030, COL_GAP = 24;
 
 /* Tile animations: tiles fade in and out, the column slides when one comes, goes or
    changes size, and new content fades up (api.animateIn). Only one-off CSS transitions

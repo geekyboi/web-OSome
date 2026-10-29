@@ -1,6 +1,6 @@
 {
   "name": "Now playing",
-  "description": "What a Yamaha MusicCast amplifier is playing, with the artwork, in a glass card on the right.",
-  "version": "1.0.1",
+  "description": "What a Yamaha MusicCast amplifier is playing, as a glass bar on the right with the artwork as a disc. Select it to play, pause or skip.",
+  "version": "1.2.0",
   "order": 20
 }
