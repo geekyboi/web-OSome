@@ -106,7 +106,11 @@ function loadBackground() {
   var src = asset(CFG.background);
   var img = new Image();
   if (/^https?:/.test(src)) { img.crossOrigin = 'anonymous'; }   // so its brightness can be measured (the service allows it)
-  img.onload = function () { if (mine !== bgLoading) { return; } bgImg = img; paintBg(); done(); };
+  // decode() unpacks the picture off the main thread, so drawing it doesn't hold up start-up
+  img.onload = function () {
+    var show = function () { if (mine !== bgLoading) { return; } bgImg = img; paintBg(); done(); };
+    if (img.decode) { img.decode().then(show, show); } else { show(); }
+  };
   var tries = 0;
   img.onerror = function () {
     if (mine !== bgLoading) { return; }

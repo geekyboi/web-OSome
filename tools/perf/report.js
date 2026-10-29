@@ -153,7 +153,7 @@ if (samples.length) {
 ---------------------------------------------------------------- */
 if (events.length) {
   heading('Start-up times (seen while you used the TV)');
-  var launches = {}, pending = {}, lastOff = null, waitHome = null, powerOn = [], ready = { ready: [], 'ready-hidden': [] }, lastUp = -1;
+  var launches = {}, pending = {}, lastOff = null, waitHome = null, powerOn = [], ready = {}, lastUp = -1;
   events.forEach(function (e) {
     var up = num(e.uptime);
     if (up < lastUp || e.kind === 'start') { pending = {}; waitHome = null; }   // a restart: times don't carry over
@@ -161,16 +161,19 @@ if (events.length) {
     if (e.kind === 'power') {
       if (OFF.test(e.detail)) { lastOff = up; } else if (e.detail === 'Active' && lastOff !== null) { waitHome = up; lastOff = null; }
     } else if (e.kind === 'life') {
-      if (e.detail === 'launching' || e.detail === 'launch') { pending[e.app] = up; }
+      // launching = it wasn't running (cold), relaunching = it was, in the background (warm)
+      if (e.detail === 'launching' || e.detail === 'launch') { pending[e.app] = { up: up, kind: 'cold' }; }
+      if (e.detail === 'relaunching') { pending[e.app] = { up: up, kind: 'warm' }; }
       if (e.detail === 'foreground') {
-        if (pending[e.app] !== undefined && up - pending[e.app] < 60) { (launches[e.app] = launches[e.app] || []).push((up - pending[e.app]) * 1000); }
+        var pd = pending[e.app], lk = e.app + ' (' + (pd && pd.kind) + ')';
+        if (pd && up - pd.up < 60) { (launches[lk] = launches[lk] || []).push((up - pd.up) * 1000); }
         delete pending[e.app];
         if (e.app === APP && waitHome !== null && up - waitHome < 120) { powerOn.push((up - waitHome) * 1000); }
         waitHome = null;
       }
     } else if (e.kind === 'mark') {
       var m = /^(\S+) (\d+)/.exec(e.detail);
-      if (m && ready[m[1]]) { ready[m[1]].push(parseInt(m[2], 10)); }
+      if (m) { (ready[m[1]] = ready[m[1]] || []).push(parseInt(m[2], 10)); }
     }
   });
   var rows2 = [['what', 'times', 'min ms', 'median', 'avg', 'p95', 'max']];
@@ -180,10 +183,13 @@ if (events.length) {
     if (s) { rows2.push([label, s.n, fmt(s.min), fmt(s.med), fmt(s.avg), fmt(s.p95), fmt(s.max)]); }
   };
   timing('Switch on -> TV Home in front', powerOn);
-  timing('TV Home page load -> ready', ready.ready);
-  timing('TV Home page load -> ready (preloaded)', ready['ready-hidden']);
+  // TV Home's own marks, in ms from its page starting to load: each part, then the whole screen
+  ['bg', 'layout', 'tiles', 'icons', 'ready', 'ready-hidden'].concat(Object.keys(ready)).forEach(function (k, i, all) {
+    if (all.indexOf(k) !== i || !ready[k]) { return; }
+    timing('TV Home page load -> ' + ({ bg: 'background drawn', layout: 'layout loaded', tiles: 'tiles placed', icons: 'icons loaded', ready: 'ready', 'ready-hidden': 'ready (preloaded)' }[k] || k), ready[k]);
+  });
   Object.keys(launches).sort(function (a, b) { return launches[b].length - launches[a].length; }).forEach(function (a) {
-    timing('Open ' + a + ' (launching -> front)', launches[a]);
+    timing('Open ' + a, launches[a]);
   });
   if (rows2.length > 1) { table(rows2); } else { console.log('  None yet.'); }
 }
