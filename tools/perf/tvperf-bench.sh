@@ -66,7 +66,7 @@ wait_front() {
 wait_ready() {
   i=0
   while [ $i -lt 150 ]; do
-    t=$(awk -F, -v t0="$1" '$3 == "mark" && $5 ~ /^ready / && $2 > t0 { print $2; exit }' "$DIR/events.csv" 2>/dev/null)
+    t=$(awk -F, -v t0="$1" '$3 == "mark" && $5 ~ /^ready / && $2 > t0 && $2 < t0 + 60 { print $2; exit }' "$DIR/events.csv" 2>/dev/null)
     [ -n "$t" ] && { echo "$t"; return; }
     nap; i=$((i + 1))
   done
