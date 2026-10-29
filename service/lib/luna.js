@@ -1,5 +1,7 @@
 /* TV Home service: the Luna methods the TV app calls (luna://net.local.tvhome.service/...). */
 'use strict';
+var fs = require('fs');
+var path = require('path');
 var pkg = require('../package.json');
 var config = require('./config');
 var IS_ROOT = config.IS_ROOT;
@@ -128,10 +130,31 @@ function startLuna() {
     }
   });
 
+  // TV Home's start-up time, for tools/perf: { name, ms }
+  service.register('perfMark', function (m) {
+    var p = m.payload || {};
+    perfMark(String(p.name || 'mark').replace(/[^\w-]/g, ''), parseInt(p.ms, 10) || 0);
+    m.respond({ returnValue: true });
+  });
+
   service.register('newPassword', function (m) {
     changePassword();
     m.respond(infoPayload());
   });
+}
+// Add a mark to the perf logger's events.csv, only if it's installed (its folder exists).
+function perfMark(name, ms) {
+  var file = path.join(config.PERF_DIR, 'events.csv');
+  if (!fs.existsSync(config.PERF_DIR)) { return; }
+  var d = new Date(), up = '';
+  // Two digits.
+  function two(n) { return (n < 10 ? '0' : '') + n; }
+  try { up = fs.readFileSync('/proc/uptime', 'utf8').split(' ')[0]; } catch (e) { /* not Linux */ }
+  var ts = d.getFullYear() + '-' + two(d.getMonth() + 1) + '-' + two(d.getDate()) + 'T' + two(d.getHours()) + ':' + two(d.getMinutes()) + ':' + two(d.getSeconds());
+  try {
+    if (!fs.existsSync(file)) { fs.writeFileSync(file, 'time,uptime,kind,app,detail\n'); }
+    fs.appendFileSync(file, ts + ',' + up + ',mark,net.local.tvhome,' + name + ' ' + ms + '\n');
+  } catch (e) { log('perfMark', e.message); }
 }
 // Make a new password and show it on the TV.
 function changePassword() {

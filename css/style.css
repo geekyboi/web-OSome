@@ -697,11 +697,11 @@ html, body {
 }
 #stage.dim #dimmer { opacity: 0.8; }
 
-/* ---------- OLED pixel shift: everything moves together, at most 2 px, very slowly ---------- */
+/* ---------- OLED pixel shift: everything moves together, at most 2 px, a 1 px step at a time ----------
+   No transition: gliding the whole screen made the TV redraw every frame for a minute. */
 #shift {
   position: absolute; left: 0; top: 0;
   width: 1920px; height: 1080px;
-  transition: transform 60s linear;
 }
 #shift #bg { left: -4px; top: -4px; width: 1928px; height: 1088px; }   /* spare edge, so the move never shows a border */
 

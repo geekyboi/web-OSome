@@ -6,8 +6,8 @@
    Every second: the plugins' onSecond (and onMinute when the minute changes), and the
    slow pixel shift to spare the OLED. Then idle dim.
 ---------------------------------------------------------------- */
-// The whole screen moves together by at most 2 px, a step every 5 minutes, gliding over a
-// minute (css #shift), so it can't be seen happening but no pixel stays lit in exactly one place.
+// The whole screen moves together by at most 2 px, a 1 px step every 5 minutes, so no pixel
+// stays lit in exactly one place. It jumps rather than glides: a glide redraws the screen every frame.
 var SHIFT = [[0, 0], [1, 1], [2, 0], [1, -1], [0, -2], [-1, -1], [-2, 0], [-1, 1], [0, 2], [1, 1]];
 var lastMinute = -1;
 
@@ -22,8 +22,7 @@ function tickClock() {
   var sh = $('shift');
   if (sh) {
     var tr = 'translate(' + s[0] + 'px,' + s[1] + 'px)';
-    if (!sh.style.transform) { sh.style.transition = 'none'; sh.style.transform = tr; void sh.offsetWidth; sh.style.transition = ''; }  // first position: no glide
-    else if (sh.style.transform !== tr) { sh.style.transform = tr; }
+    if (sh.style.transform !== tr) { sh.style.transform = tr; }
   }
   eachPlugin('onMinute', [d]);
   eachPlugin('onSecond', [d]);
@@ -147,6 +146,14 @@ function introTiles() {
     Array.prototype.forEach.call(discs, function (d) { d.style.animationDelay = ''; });
   }, 250 + discs.length * 120 + 700);
 }
+var perfMarked = {};
+// Tell the service how long start-up took, in ms since the page began loading (for tools/perf). Once per name.
+function perfMark(name) {
+  if (perfMarked[name]) { return; }
+  perfMarked[name] = true;
+  if (!window.performance || !performance.now) { return; }
+  luna(SVC + 'perfMark', { name: name, ms: Math.round(performance.now()) }, function () {});
+}
 // Fade out the holding screen once everything is ready (or after 4 seconds at most).
 function liftHold() {
   var hold = $('hold'), t0 = Date.now();
@@ -155,7 +162,13 @@ function liftHold() {
     var layout = svc.ready || svc.state === 'none' || svc.state === 'notroot';
     var tiles = pluginsKnown && !pluginsLoading();       // the plugins' tiles are in place
     var icons = Array.prototype.every.call($('dock').getElementsByTagName('img'), function (i) { return i.complete; });
+    // how long each part took, for tools/perf
+    if (bgReady) { perfMark('bg'); }
+    if (layout) { perfMark('layout'); }
+    if (tiles) { perfMark('tiles'); }
+    if (icons) { perfMark('icons'); }
     if (!(bgReady && layout && tiles && icons) && Date.now() - t0 < 4000) { setTimeout(check, 80); return; }
+    perfMark(document.hidden ? 'ready-hidden' : 'ready');
     // preloaded in the background: nothing to see, so it's simply gone when TV Home is opened
     if (document.hidden) { hold.style.display = 'none'; introPending = true; return; }
     // two frames, so the finished screen has been painted underneath before it's revealed

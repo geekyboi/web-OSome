@@ -11,7 +11,7 @@
 #time .colon { 
   margin: 0 0.2em;
   font-weight: 400;
-  animation: colon-on 0.8s steps(8) both;   /* a slow, gentle pulse, ~10 updates a second to spare the CPU */
+  animation: colon-on 0.45s steps(3) both;   /* a gentle pulse in 3 steps: the screen redraws 3 times a second, not 8 */
 }
 #time .colon.off { animation-name: colon-off; }   /* blinks with the seconds (tile.js onSecond) */
 @keyframes colon-on  { from { opacity: 0.55; } to { opacity: 1; } }
