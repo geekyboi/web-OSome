@@ -63,7 +63,8 @@ Passwords, your Home Assistant token, calendar links and so on are entered in th
 editor and saved **on the TV**, so none of it ends up in this repo.
 
 There's a lot more detail (the Home button, calendars, bins, backgrounds...) in
-[docs/GUIDE.md](docs/GUIDE.md).
+[docs/GUIDE.md](docs/GUIDE.md), and a diagram of how it all fits together in
+[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 ## Plugins
 

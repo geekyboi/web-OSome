@@ -2,7 +2,7 @@
 
 Read this before changing anything. It's for AI assistants (Claude Code, Codex, Copilot,
 Cursor...) and for the people using them. The user-facing docs are [README.md](README.md),
-[docs/GUIDE.md](docs/GUIDE.md) and [plugins/README.md](plugins/README.md); this file is the
+[docs/GUIDE.md](docs/GUIDE.md), [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) and [plugins/README.md](plugins/README.md); this file is the
 short version of how the code fits together and what not to break.
 
 ## What this is
