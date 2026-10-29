@@ -234,6 +234,12 @@ An HDMI input (e.g. a console that woke the TV over HDMI-CEC), AirPlay, or an ap
 yourself after that is left alone. It doesn't do this when the screen comes back from *Screen Off* (e.g.
 music playing with the screen off) or the screen saver.
 
+LG's *Quick Start+* closes TV Home every time the TV goes into standby, so switching on would
+start it from scratch (2 to 5 seconds, with the TV flat out). So 5 seconds into standby the
+watcher loads TV Home again, hidden, and switching on brings it up in about 0.4 seconds.
+It stays in memory during standby (about 55 MB). Turn it off with `STANDBY_PRELOAD=0`, or
+straight away with `touch /home/root/tvhome-no-preload`.
+
 - **Settings** are at the top of `startup/autostart.sh`: the delays (0 by default),
   `GUARD` (how long it keeps checking after opening), `APP_GUARD` (how long it takes
   the screen back from apps; this also overrides an app button used to switch on), and

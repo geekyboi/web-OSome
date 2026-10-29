@@ -18,6 +18,10 @@ APP_GUARD=5        # for this many seconds, also take the screen back from an ap
                    # This also overrides switching on with an app button on the remote.
 WAKE_WAIT=3        # on a wake from standby, wait this long for "Last source" to open TV Home
                    # before stepping in. 0 = open straight away (for Home Auto Launch).
+STANDBY_PRELOAD=1  # 1 = when the TV goes to standby, load TV Home again hidden a few seconds after
+                   # LG's Quick Start+ has closed it, so switching on is a quick relaunch (~0.4 s)
+                   # rather than a fresh start (~2-5 s). 0 = off. Also off while
+                   # /home/root/tvhome-no-preload exists.
 
 LOG=/tmp/tvhome-autostart.log      # cleared when the TV restarts
 PIDF=/tmp/tvhome-autostart.pid
@@ -76,6 +80,18 @@ open_home() {
   done
 }
 
+# After the TV goes to standby, LG's Quick Start+ (qbd) closes TV Home about 1 s later.
+# Load it again hidden once that's done, if the TV is still off.
+preload_hidden() {
+  sleep 5
+  was_off "$(cat "$STATEF" 2>/dev/null)" || return
+  [ -f /home/root/tvhome-no-preload ] && return
+  $LUNA -n 1 luna://com.webos.applicationManager/running '{}' </dev/null 2>/dev/null | grep -q "\"id\" *: *\"$APP\"" && return
+  log "standby: loading $APP hidden"
+  $LUNA -n 1 luna://com.webos.applicationManager/launch "{\"id\":\"$APP\",\"preload\":\"full\"}" </dev/null >/dev/null 2>&1 ||
+    log "hidden load failed"
+}
+
 foreground() {
   $LUNA -n 1 luna://com.webos.applicationManager/getForegroundAppInfo '{}' </dev/null 2>/dev/null |
     sed -n 's/.*"appId" *: *"\([^"]*\)".*/\1/p'
@@ -110,6 +126,9 @@ while true; do
     if [ "$st" = "Active" ] && was_off "$last"; then
       if [ -z "$last" ]; then sleep "$BOOT_DELAY"; else sleep "$WAKE_DELAY"; fi
       if [ -z "$last" ]; then open_home boot & else open_home wake & fi   # in the background, so power changes keep being read meanwhile
+    fi
+    if [ "$STANDBY_PRELOAD" = 1 ] && [ -n "$last" ] && was_off "$st" && ! was_off "$last"; then
+      preload_hidden &
     fi
   done
   sleep 5
