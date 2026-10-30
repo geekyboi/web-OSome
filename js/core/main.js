@@ -6,10 +6,13 @@
    Every second: the plugins' onSecond (and onMinute when the minute changes), and the
    slow pixel shift to spare the OLED. Then idle dim.
 ---------------------------------------------------------------- */
-// The whole screen moves together by at most 2 px, a 1 px step every 5 minutes, so no pixel
-// stays lit in exactly one place. It jumps rather than glides: a glide redraws the screen every frame.
+// The whole screen moves together by at most 2 px, a 1 px step every 5 minutes on screen, so no
+// pixel stays lit in exactly one place. It jumps rather than glides: a glide redraws the screen every frame.
+// It counts steps rather than following the clock: back from an app it carries on from where it
+// was, instead of snapping to wherever the clock says (up to 4 px at once).
 var SHIFT = [[0, 0], [1, 1], [2, 0], [1, -1], [0, -2], [-1, -1], [-2, 0], [-1, 1], [0, 2], [1, 1]];
 var lastMinute = -1;
+var shiftStep = 0, lastSlot = -1;   // lastSlot: the 5-minute slot of the last step (-1: catch up without stepping)
 
 // Runs every second: the plugins' onSecond, and once a minute their onMinute and the pixel shift.
 function tickClock() {
@@ -17,8 +20,10 @@ function tickClock() {
   var m = d.getMinutes();
   if (m === lastMinute) { eachPlugin('onSecond', [d]); return; }
   lastMinute = m;
-  var h = d.getHours();
-  var s = SHIFT[Math.floor((h * 60 + m) / 5) % SHIFT.length];
+  var slot = Math.floor((d.getHours() * 60 + m) / 5);
+  if (lastSlot !== -1 && slot !== lastSlot) { shiftStep = (shiftStep + 1) % SHIFT.length; }
+  lastSlot = slot;
+  var s = SHIFT[shiftStep];
   var sh = $('shift');
   if (sh) {
     var tr = 'translate(' + s[0] + 'px,' + s[1] + 'px)';
@@ -102,6 +107,7 @@ document.addEventListener('click', wake);
 // pressed while TV Home was already in front, which goes back to the home row's first app.
 function onReturn(toStart) {
   lastMinute = -1;
+  lastSlot = -1;   // time spent behind another app doesn't move the screen
   tickClock();
   wake();
   if (!settingsOpen()) {
