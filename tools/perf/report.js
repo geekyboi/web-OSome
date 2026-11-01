@@ -185,8 +185,12 @@ if (events.length) {
   timing('Switch on -> TV Home in front', powerOn);
   // TV Home's own marks, in ms from its page starting to load: each part, then the whole screen
   ['bg', 'layout', 'tiles', 'icons', 'ready', 'ready-hidden'].concat(Object.keys(ready)).forEach(function (k, i, all) {
-    if (all.indexOf(k) !== i || !ready[k]) { return; }
+    if (all.indexOf(k) !== i || !ready[k] || /^key-/.test(k)) { return; }
     timing('TV Home page load -> ' + ({ bg: 'background drawn', layout: 'layout loaded', tiles: 'tiles placed', icons: 'icons loaded', ready: 'ready', 'ready-hidden': 'ready (preloaded)' }[k] || k), ready[k]);
+  });
+  // remote presses: ms from the key to the screen showing it
+  Object.keys(ready).filter(function (k) { return /^key-/.test(k); }).sort().forEach(function (k) {
+    timing('Button ' + k.slice(4) + ' -> screen', ready[k]);
   });
   Object.keys(launches).sort(function (a, b) { return launches[b].length - launches[a].length; }).forEach(function (a) {
     timing('Open ' + a, launches[a]);

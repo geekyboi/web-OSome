@@ -77,4 +77,5 @@ function resetLayout() {
   storeLocal();
   pushToService();
 }
-(function () { var saved = loadLayout(); CFG.categories = saved || ensureHome(CFG.categories || []); })();
+var hadLocalLayout = false;   // a layout saved on the TV was found at start-up (so the screen needn't wait for the service)
+(function () { var saved = loadLayout(); hadLocalLayout = !!saved; CFG.categories = saved || ensureHome(CFG.categories || []); })();
