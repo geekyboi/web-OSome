@@ -22,10 +22,7 @@ STANDBY_PRELOAD=1  # 1 = when the TV goes to standby, load TV Home again hidden 
                    # LG's Quick Start+ has closed it, so switching on is a quick relaunch (~0.4 s)
                    # rather than a fresh start (~2-5 s). 0 = off. Also off while
                    # /home/root/tvhome-no-preload exists.
-BOOT_CALM=120      # after a full start, run LG's background services at low priority for this many
-                   # seconds (counted from power-on), so TV Home and the remote stay responsive
-                   # while LG finishes starting up. Nothing is stopped. 0 = off.
-CALM_PROCS="sdx iepg iot-client ss.gateway pbs iconnectivity"
+# (LG's background services run at low priority just after a full start: see calm-boot.sh.)
 
 LOG=/tmp/tvhome-autostart.log      # cleared when the TV restarts
 PIDF=/tmp/tvhome-autostart.pid
@@ -96,25 +93,6 @@ preload_hidden() {
     log "hidden load failed"
 }
 
-# Just after a full start, lower LG's background services' priority until BOOT_CALM seconds
-# after power-on, then put each back as it was.
-calm_boot() {
-  read up _ < /proc/uptime; up=${up%.*}
-  left=$((BOOT_CALM - up))
-  [ "$BOOT_CALM" -gt 0 ] && [ "$left" -gt 0 ] || return
-  undo=
-  for name in $CALM_PROCS; do
-    for pid in $(pgrep -x "$name"); do
-      was=$(awk '{ print $19 }' "/proc/$pid/stat" 2>/dev/null) || continue
-      renice 10 -p "$pid" >/dev/null 2>&1 && undo="$undo $pid:$was"
-    done
-  done
-  log "boot: $CALM_PROCS at low priority for ${left}s"
-  sleep "$left"
-  for x in $undo; do renice "${x#*:}" -p "${x%%:*}" >/dev/null 2>&1; done
-  log "boot: priorities back to normal"
-}
-
 foreground() {
   $LUNA -n 1 luna://com.webos.applicationManager/getForegroundAppInfo '{}' </dev/null 2>/dev/null |
     sed -n 's/.*"appId" *: *"\([^"]*\)".*/\1/p'
@@ -135,7 +113,8 @@ was_off() {
   esac
 }
 
-calm_boot &
+# usually already done by TV Home's service, which starts earlier
+sh "$(dirname "$0")/calm-boot.sh" &
 
 while true; do
   # Stream power-state changes. If the subscription drops (e.g. during start-up, before the

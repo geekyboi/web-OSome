@@ -139,6 +139,18 @@ function startLuna() {
   });
   // diag:end
 
+  // How busy the TV is: { uptime (s since power-on), cpu (% of the whole TV over the last 0.3 s) }.
+  // TV Home keeps its loading screen up after a full start until the TV has calmed down.
+  service.register('busy', function (m) {
+    var a = cpuTicks();
+    setTimeout(function () {
+      var b = cpuTicks(), up = 0;
+      try { up = parseFloat(fs.readFileSync('/proc/uptime', 'utf8')); } catch (e) { /* not Linux */ }
+      var cpu = a && b && b[0] > a[0] ? Math.round(100 - (b[1] - a[1]) * 100 / (b[0] - a[0])) : null;
+      m.respond({ returnValue: true, uptime: up, cpu: cpu });
+    }, 300);
+  });
+
   service.register('newPassword', function (m) {
     changePassword();
     m.respond(infoPayload());
@@ -160,6 +172,13 @@ function perfMark(name, ms) {
   } catch (e) { log('perfMark', e.message); }
 }
 // diag:end
+// Total and idle CPU ticks from /proc/stat, or null.
+function cpuTicks() {
+  try {
+    var f = fs.readFileSync('/proc/stat', 'utf8').split('\n')[0].split(/\s+/).slice(1).map(Number);
+    return [f.reduce(function (x, y) { return x + (y || 0); }, 0), (f[3] || 0) + (f[4] || 0)];
+  } catch (e) { return null; }
+}
 // Make a new password and show it on the TV.
 function changePassword() {
   auth.setNewPassword();

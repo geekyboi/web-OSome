@@ -195,23 +195,40 @@ function liftHold() {
   (function check() {
     // the saved copy is the last layout the service sent, so don't wait for the service to start (it rarely differs)
     var layout = hadLocalLayout || svc.ready || svc.state === 'none' || svc.state === 'notroot';
-    var tiles = pluginsKnown && !pluginsLoading();       // the plugins' tiles are in place
+    var tiles = pluginsKnown && !pluginsLoading() && !pluginsAwaitingData();   // the plugins' tiles are in place, with their data
     var icons = Array.prototype.every.call($('dock').getElementsByTagName('img'), function (i) { return i.complete; });
     // how long each part took, for tools/perf   // diag
     if (bgReady) { perfMark('bg'); }   // diag
     if (layout) { perfMark('layout'); }   // diag
     if (tiles) { perfMark('tiles'); }   // diag
     if (icons) { perfMark('icons'); }   // diag
-    if (!(bgReady && layout && tiles && icons) && Date.now() - t0 < 4000) { setTimeout(check, 80); return; }
+    // never reveal a half-built screen (just after switch-on this takes ~6 s); 15 s is only a safety net
+    if (!(bgReady && layout && tiles && icons) && Date.now() - t0 < 15000) { setTimeout(check, 80); return; }
     perfMark(document.hidden ? 'ready-hidden' : 'ready');   // diag
     // preloaded in the background: nothing to see, so it's simply gone when TV Home is opened
     if (document.hidden) { hold.style.display = 'none'; introPending = true; return; }
-    // two frames, so the finished screen has been painted underneath before it's revealed
-    requestAnimationFrame(function () { requestAnimationFrame(function () {
-      hold.classList.add('out');
-      introTiles();
-      setTimeout(function () { hold.style.display = 'none'; }, 800);   // not transitionend: it may run while hidden (preloaded)
-    }); });
+    waitCalm(function () {
+      // two frames, so the finished screen has been painted underneath before it's revealed
+      requestAnimationFrame(function () { requestAnimationFrame(function () {
+        hold.classList.add('out');
+        introTiles();
+        setTimeout(function () { hold.style.display = 'none'; }, 800);   // not transitionend: it may run while hidden (preloaded)
+      }); });
+    });
+  })();
+}
+// Just after a full start the TV is flat out for a while and the remote feels uneven, so keep the
+// loading screen up until it calms down (under 60% busy twice running), for at most 10 s.
+// Any other start goes straight on: the TV has been on a while, or there's no service to ask.
+function waitCalm(fn) {
+  var t0 = Date.now(), calm = 0;
+  (function ask() {
+    luna(SVC + 'busy', {}, function (r) {
+      var busy = r && r.returnValue !== false && r.uptime > 0 && r.uptime < 120 && r.cpu != null && r.cpu >= 60;
+      calm = busy || pluginsAwaitingData() ? 0 : calm + 1;   // the tiles' data may still be on its way
+      if (calm >= 2 || (r && r.uptime >= 120) || !r || r.cpu == null || Date.now() - t0 > 10000) { fn(); return; }
+      ask();
+    }, 1000);
   })();
 }
 
