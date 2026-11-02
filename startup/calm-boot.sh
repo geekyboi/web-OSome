@@ -11,9 +11,9 @@ BOOT_CALM=120      # seconds after power-on. 0 = off.
 # process names as pgrep -x sees them (the first 15 characters); ones missing on a TV are skipped.
 # Not here: anything that draws the screen, plays sound or video, reads the remote, or the luna bus.
 CALM_PROCS="sdx iepg iot-client ss.gateway pbs iconnectivity
-  admanager iotjs run-iot-js-serv nudge tvlinkcmdprocess tvlink-network- user-context-ma
-  ocpservice sportsalarm nlpmanager tts voiceinput_hidr dmr ssdp-discovery broadcast-conf
-  captureservice performer browser-service com.webos.chrom chromecast"
+  admanager activitymanager sportsalarm nlpmanager user-context-ma ocpservice nudge
+  broadcast-conf- tvlink-network- tvlinkcmdproces ssdp-discovery- run-iot-js-serv iotjs
+  com.webos.chrom browser-service"
 LOG=/tmp/tvhome-autostart.log
 
 log() { echo "$(date '+%Y-%m-%d %H:%M:%S') $*" >> "$LOG"; }
