@@ -130,18 +130,21 @@ function startLuna() {
     }
   });
 
+  // diag:start
   // TV Home's start-up time, for tools/perf: { name, ms }
   service.register('perfMark', function (m) {
     var p = m.payload || {};
     perfMark(String(p.name || 'mark').replace(/[^\w-]/g, ''), parseInt(p.ms, 10) || 0);
     m.respond({ returnValue: true });
   });
+  // diag:end
 
   service.register('newPassword', function (m) {
     changePassword();
     m.respond(infoPayload());
   });
 }
+// diag:start
 // Add a mark to the perf logger's events.csv, only if it's installed (its folder exists).
 function perfMark(name, ms) {
   var file = path.join(config.PERF_DIR, 'events.csv');
@@ -156,6 +159,7 @@ function perfMark(name, ms) {
     fs.appendFileSync(file, ts + ',' + up + ',mark,net.local.tvhome,' + name + ' ' + ms + '\n');
   } catch (e) { log('perfMark', e.message); }
 }
+// diag:end
 // Make a new password and show it on the TV.
 function changePassword() {
   auth.setNewPassword();

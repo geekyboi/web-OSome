@@ -196,6 +196,13 @@ The package includes the web editor's service (`service/`), which
 later says the editor isn't installed, package the service explicitly:
 `ares-package web-osome web-osome/service`.
 
+**Lean build.** `web-osome/tools/lean/build.sh` makes a copy without the
+diagnostics (the timing marks sent for `tools/perf`) and without the tools, docs and
+examples, in `web-osome-lean/` next to the repo, and packages it if `ares-package` is
+installed. Install the `.ipk` the same way. It's the same app, so it replaces the normal
+one; reinstall the normal build when you want to measure again.
+Pushing a version tag (like `v1.0.0`) makes a GitHub release with both packages.
+
 **The catch with Developer Mode:** its session is time-limited, and when it
 expires the TV removes apps installed this way. Renew it from the Developer Mode
 app (sources I found disagree on the length: 1000 hours on webOS Brew, 50 hours in

@@ -1,0 +1,39 @@
+# Push a tag like v1.0.0 and this makes a GitHub release with two packages:
+# the normal one (with the tools/perf diagnostics), the lean one (tools/lean/build.sh),
+# and a zip of the shell scripts and config files.
+name: Release
+on:
+  push:
+    tags: ['v*']
+permissions:
+  contents: write
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm install -g @webos-tools/cli
+      - name: Build both packages
+        run: |
+          set -e
+          V=$(node -p "require('./appinfo.json').version")
+          mkdir -p ../full/web-osome ../dist
+          git archive HEAD | tar -x -C ../full/web-osome
+          (cd ../full && ares-package -o out web-osome web-osome/service)
+          sh tools/lean/build.sh ../lean/web-osome
+          mv ../full/out/net.local.tvhome_${V}_all.ipk ../dist/net.local.tvhome_${V}_all.ipk
+          mv ../lean/net.local.tvhome_${V}_all.ipk ../dist/net.local.tvhome_${V}_all-lean.ipk
+          # the scripts and config that also run from a computer or Home Assistant
+          git archive --format=zip -o ../dist/tvhome-${V}-scripts-and-config.zip HEAD startup home-assistant tools/perf service/services.json service/package.json appinfo.json
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" ../dist/*.ipk --title "TV Home $GITHUB_REF_NAME" --notes "- \`net.local.tvhome_*_all.ipk\`: normal build, with the diagnostics for tools/perf.
+          - \`net.local.tvhome_*_all-lean.ipk\`: lean build, no diagnostics, tools or docs.
+          - \`tvhome-*-scripts-and-config.zip\`: startup scripts, Home Assistant config, perf tools and app/service config, to use from a computer.
+
+          Both are the same app, so installing one replaces the other."

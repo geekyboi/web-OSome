@@ -49,6 +49,8 @@ ares-install --device tv net.local.tvhome_1.0.0_all.ipk
 ares-launch  --device tv net.local.tvhome
 ```
 
+For a leaner install without the diagnostics, run `web-osome/tools/lean/build.sh` instead of `ares-package` (more in [the guide](docs/GUIDE.md#3-install-on-the-tv)).
+
 Heads up: Developer Mode has a time limit, The TV removes the app when it does. You need to Renew it
 in the Developer Mode app if you're TV is not rooted
 
