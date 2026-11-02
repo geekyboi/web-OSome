@@ -235,16 +235,21 @@ function liteWhileBusy() {
   })();
 }
 // Just after a full start the TV is flat out for a while and the remote feels uneven, so keep the
-// loading screen up until it calms down (under 60% busy three times running), for at most 10 s.
-// Any other start goes straight on: the TV has been on a while, or there's no service to ask.
+// loading screen up until HOLD_UNTIL seconds after power-on (just after the Homebrew Channel's
+// start-up scripts, ~53-55 s, all run at once) and until it calms down (under 60% busy three
+// times running), for at most 25 s. Any other start goes straight on: the TV has been on a while,
+// or there's no service to ask.
+var HOLD_UNTIL = 57;
 function waitCalm(fn) {
   var t0 = Date.now(), calm = 0;
   (function ask() {
     luna(SVC + 'busy', {}, function (r) {
-      var busy = r && r.returnValue !== false && r.uptime > 0 && r.uptime < 120 && r.cpu != null && r.cpu >= 60;
+      var known = r && r.returnValue !== false && r.uptime > 0 && r.cpu != null;
+      var busy = known && r.uptime < 120 && r.cpu >= 60;
       calm = busy || pluginsAwaitingData() ? 0 : calm + 1;   // the tiles' data may still be on its way
       if (busy) { liteWhileBusy(); }
-      if (calm >= 3 || (r && r.uptime >= 120) || !r || r.cpu == null || Date.now() - t0 > 10000) { fn(); return; }
+      var early = known && r.uptime < HOLD_UNTIL;
+      if (!known || r.uptime >= 120 || (calm >= 3 && !early) || Date.now() - t0 > 25000) { fn(); return; }
       ask();
     }, 1000);
   })();
