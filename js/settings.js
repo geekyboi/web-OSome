@@ -236,7 +236,9 @@
     });
   }
 
+  var drawnKey = null;   // the layout and section the list was last drawn for
   function renderList() {
+    drawnKey = JSON.stringify(S.layout) + '|' + S.cat;
     var c = S.layout[S.cat];
     $('s-lh').textContent = 'In ' + (c ? c.label : '') + ' (' + ((c && c.tiles.length) || 0) + ')';
     var host = $('s-list');
@@ -318,7 +320,8 @@
         if (S.open && S.src === which) {
           var k = S.focus && S.focus.getAttribute('data-k');
           renderSourceList();
-          if (k) { restoreFocus(k); }
+          // only if the redraw removed the focused control: restoreFocus() forces a layout (~30 ms)
+          if (k && !root.contains(S.focus)) { restoreFocus(k); }
         }
       });
       if (S.cache[which] !== entry) { return; } // answered straight away: already drawn above
@@ -576,8 +579,16 @@
     S.resetArmed = false;
     S.cache = {};
     S.focus = null;
+    var lit = root.querySelectorAll('.sfocus');
+    for (var i = 0; i < lit.length; i++) { lit[i].classList.remove('sfocus'); }
+    // Rebuilding the rows and icons takes ~55 ms, so reuse them when the layout hasn't changed.
+    if (drawnKey !== JSON.stringify(S.layout) + '|' + S.cat) { renderCats(); renderList(); }
+    renderTop();
+    renderSources();
     root.classList.add('show');
-    renderAll('cat:' + S.cat);
+    // Start on the section's tab, which is always shown. restoreFocus() would check it's visible,
+    // and that forces the whole panel's layout (~40 ms).
+    setFocus(root.querySelector('[data-k="cat:' + S.cat + '"]'));
   }
 
   function close() {
@@ -592,7 +603,7 @@
 
   // Icons arrived in the background: redraw the lists, keeping focus (and any rename in progress).
   function iconsChanged() {
-    if (!S.open) { return; }
+    if (!S.open) { drawnKey = null; return; }   // redraw the rows next time it opens
     var k = S.focus && S.focus.getAttribute('data-k');
     if (S.renaming < 0) { renderList(); }
     renderSourceList();

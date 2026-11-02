@@ -115,8 +115,10 @@ function page(ci, dir) {
   select(ci, Math.max(obj.start, Math.min(obj.start + v - 1, from + dir)));
 }
 
+var renderedKey = null;   // the layout the dock was last built from
 // Build the dock from CFG.categories: one section per category, one tile per app.
 function render() {
+  renderedKey = JSON.stringify(CFG.categories || []);
   var host = $('dock');
   host.innerHTML = '';
   cats = [];
@@ -227,9 +229,9 @@ function activate(ci, ti) {
   var d = cats[ci] && cats[ci].discs[ti];
   if (!d) { return; }
   var node = d.node;
+  // restart the animation two frames on (forcing a layout here instead stalls the press by 60-80 ms)
   node.classList.remove('fire');
-  void node.offsetWidth; // restart the animation
-  node.classList.add('fire');
+  requestAnimationFrame(function () { requestAnimationFrame(function () { node.classList.add('fire'); }); });
   // Take it off once it has played: left on, it replays every time the row is shown again
   // (the icon grows, then snaps back).
   clearTimeout(node.fireTimer);
@@ -338,7 +340,8 @@ function openSettings() {
 function rerender() {
   if (svc && svc.pending && !settingsOpen()) { var d = svc.pending; svc.pending = null; applyDoc(d); return; }
   var was = cur, d = cats[cur.c] && cats[cur.c].discs[cur.i], name = d ? (d.cfg.name || '') : null;
-  render();
+  var key = JSON.stringify(CFG.categories || []);
+  if (key !== renderedKey) { render(); }   // rebuilding the dock takes ~70 ms, so only when the layout changed
   cur = { c: -1, i: 0 };
   onGear = false;
   focusTile(was.c, was.i, name);   // stay on the same app if the new layout still has it there
