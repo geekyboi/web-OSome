@@ -11,9 +11,9 @@ case "$OUT" in "$REPO"|"$REPO"/*) echo "out-dir must be outside the repo" >&2; e
 
 rm -rf "$OUT"
 mkdir -p "$OUT"
-# only what the TV needs: tracked files, minus tools, docs and examples
+# only what the TV needs: tracked files, minus the perf tools, docs and examples
 cd "$REPO"
-git ls-files | grep -vE '^(tools|docs|example-plugins|home-assistant)/|(^|/)[^/]*\.md$|^LICENSE$' | while IFS= read -r f; do
+git ls-files | grep -vE '^(\.github|tools|docs|example-plugins)/|(^|/)[^/]*\.md$|^LICENSE$' | while IFS= read -r f; do
   mkdir -p "$OUT/$(dirname "$f")"
   case "$f" in
     *.js|*.html|*.css)
