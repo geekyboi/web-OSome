@@ -61,6 +61,18 @@ function fit() {
 /* ---------------------------------------------------------------
    Input
 ---------------------------------------------------------------- */
+// A held arrow repeats faster than a busy TV can draw (just after switch-on). Repeats that arrive
+// before the last move has reached the screen are dropped, so the focus stops where you let go
+// instead of carrying on for up to a second. Single presses are never dropped.
+var moveShown = true;
+document.addEventListener('keydown', function (e) {
+  var k = e.keyCode;
+  if (k >= KEY.LEFT && k <= KEY.DOWN) {
+    if (e.repeat && !moveShown) { e.preventDefault(); e.stopImmediatePropagation(); return; }
+    moveShown = false;
+    requestAnimationFrame(function () { moveShown = true; });
+  }
+}, true);
 document.addEventListener('keydown', function (e) {
   wake();
   var k = e.keyCode;
@@ -233,13 +245,30 @@ function init() {
   placeGear();
   wake();
   loadBackground();
-  checkHA();
   setInterval(function () { if (!document.hidden) { checkHA(); } }, 60000);
-  setTimeout(function () { syncIcons(false); }, 1500);
   discoverPlugins();
   connectService();
   liftHold();
-  setTimeout(registerInput, 3000);   // after start-up, so it doesn't slow the first paint
+  // Extras wait until the TV has calmed down: just after switch-on LG's own start-up keeps it busy
+  // for a minute or so, and these would only compete with the screen and the remote.
+  whenQuiet(function () { checkHA(); syncIcons(false); registerInput(); });
+}
+
+// Run fn once the screen has drawn smoothly (no frame over 60 ms apart) for a second, or after a minute.
+function whenQuiet(fn) {
+  var start = Date.now(), calm = Date.now(), last = 0, done = false;
+  // Run fn, once.
+  function go() { if (!done) { done = true; fn(); } }
+  setTimeout(go, 60000);   // also covers a preloaded (hidden) start, when frames don't run
+  // Check the gap since the last frame.
+  function frame(t) {
+    if (done) { return; }
+    if (last && t - last > 60) { calm = Date.now(); }
+    last = t;
+    if (Date.now() - calm >= 1000 && Date.now() - start >= 1500) { go(); return; }
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
 }
 
 init();
