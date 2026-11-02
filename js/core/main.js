@@ -103,9 +103,13 @@ document.addEventListener('mousemove', function () { lastMove = Date.now(); }, t
 document.addEventListener('mousemove', wake);
 document.addEventListener('click', wake);
 
+var returnedAt = 0;
 // Brought back to the front (Home pressed again, or returning from an app). toStart: Home was
 // pressed while TV Home was already in front, which goes back to the home row's first app.
 function onReturn(toStart) {
+  var again = Date.now() - returnedAt < 500;   // webOSRelaunch and visibilitychange both fire on a return
+  returnedAt = Date.now();
+  if (again && toStart !== true) { return; }
   lastMinute = -1;
   lastSlot = -1;   // time spent behind another app doesn't move the screen
   tickClock();
@@ -114,7 +118,7 @@ function onReturn(toStart) {
     if (toStart === true) { focusTile(homeCat, 0); }
     else { focusTile(cur.c, cur.i); }   // back from an app: where you left it
   }
-  checkHA();
+  setTimeout(checkHA, 500);   // after the screen is back, so it doesn't hold up the first frame
   try { if (window.PalmSystem && window.PalmSystem.activate) { window.PalmSystem.activate(); } } catch (e) { /* ignore */ }
 }
 var shownAt = 0;   // when TV Home last came back to the front
@@ -153,19 +157,30 @@ function introTiles() {
   }, 250 + discs.length * 120 + 700);
 }
 var perfMarked = {};
-// Tell the service how long start-up took, in ms since the page began loading (for tools/perf). Once per name.
-function perfMark(name) {
-  if (perfMarked[name]) { return; }
+// Tell the service how long something took, for tools/perf: ms, or by default ms since the page
+// began loading (start-up). Start-up marks are sent once per name.
+function perfMark(name, ms) {
+  if (ms == null && perfMarked[name]) { return; }
   perfMarked[name] = true;
   if (!window.performance || !performance.now) { return; }
-  luna(SVC + 'perfMark', { name: name, ms: Math.round(performance.now()) }, function () {});
+  luna(SVC + 'perfMark', { name: name, ms: ms == null ? Math.round(performance.now()) : ms }, function () {});
 }
+// How long each remote press takes to show on screen (from the key to just after the next frame).
+var KEY_NAMES = { 37: 'left', 38: 'up', 39: 'right', 40: 'down', 13: 'ok', 461: 'back' };
+document.addEventListener('keydown', function (e) {
+  var name = KEY_NAMES[e.keyCode], t0 = e.timeStamp;
+  if (!name || !t0 || !window.performance || !window.requestAnimationFrame) { return; }
+  requestAnimationFrame(function () {
+    setTimeout(function () { perfMark('key-' + name, Math.round(performance.now() - t0)); }, 0);
+  });
+}, true);
 // Fade out the holding screen once everything is ready (or after 4 seconds at most).
 function liftHold() {
   var hold = $('hold'), t0 = Date.now();
   if (!hold) { return; }
   (function check() {
-    var layout = svc.ready || svc.state === 'none' || svc.state === 'notroot';
+    // the saved copy is the last layout the service sent, so don't wait for the service to start (it rarely differs)
+    var layout = hadLocalLayout || svc.ready || svc.state === 'none' || svc.state === 'notroot';
     var tiles = pluginsKnown && !pluginsLoading();       // the plugins' tiles are in place
     var icons = Array.prototype.every.call($('dock').getElementsByTagName('img'), function (i) { return i.complete; });
     // how long each part took, for tools/perf

@@ -93,6 +93,23 @@ function paintBg() {
   bgEl.setAttribute('data-fit', bgOpts().fit);
 }
 var bgLoading = 0, bgReady = false;
+/* A copy of an uploaded picture is kept on the TV (local storage), so at start-up it's
+   drawn straight away rather than waiting for the service to start and send it. */
+var BG_CACHE = 'tvhome.bg.v1';
+// The kept copy of picture src, as a data: URL, or null.
+function cachedBg(src) {
+  try { var c = JSON.parse(window.localStorage.getItem(BG_CACHE) || 'null'); return c && c.src === src ? c.data : null; } catch (e) { return null; }
+}
+// Keep a copy of picture img (from src), no bigger than it needs to be to fill the screen.
+function cacheBg(src, img) {
+  try {
+    var w = img.naturalWidth, h = img.naturalHeight, k = Math.min(1, Math.max(1928 / w, 1088 / h));
+    var cv = document.createElement('canvas');
+    cv.width = Math.round(w * k); cv.height = Math.round(h * k);
+    cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
+    window.localStorage.setItem(BG_CACHE, JSON.stringify({ src: src, data: cv.toDataURL('image/jpeg', 0.9) }));
+  } catch (e) { /* storage full or unavailable: it's only a shortcut */ }
+}
 // Load CFG.background and redraw everything that depends on it (picture, glass, text tone).
 // Uploaded pictures come from the service, so it keeps retrying for a minute while that starts.
 function loadBackground() {
@@ -104,23 +121,30 @@ function loadBackground() {
   function done() { scene = buildScene(); paintGlass(); measuredTone = measureTone(); applyTone(); bgReady = true; }
   if (!CFG.background) { done(); return; }
   var src = asset(CFG.background);
+  var uploaded = /^files\//.test(CFG.background);
+  var copy = uploaded ? cachedBg(src) : null;
   var img = new Image();
-  if (/^https?:/.test(src)) { img.crossOrigin = 'anonymous'; }   // so its brightness can be measured (the service allows it)
+  if (!copy && /^https?:/.test(src)) { img.crossOrigin = 'anonymous'; }   // so its brightness can be measured (the service allows it)
   // decode() unpacks the picture off the main thread, so drawing it doesn't hold up start-up
   img.onload = function () {
-    var show = function () { if (mine !== bgLoading) { return; } bgImg = img; paintBg(); done(); };
+    var show = function () {
+      if (mine !== bgLoading) { return; }
+      bgImg = img; paintBg(); done();
+      if (uploaded && !copy) { setTimeout(function () { cacheBg(src, img); }, 3000); }   // once start-up is over
+    };
     if (img.decode) { img.decode().then(show, show); } else { show(); }
   };
   var tries = 0;
   img.onerror = function () {
     if (mine !== bgLoading) { return; }
+    if (copy) { copy = null; img.crossOrigin = 'anonymous'; img.src = src; return; }   // a broken copy: fetch the real one
     if (!tries) { paintBg(); done(); }   // show the colour meanwhile
     // Uploaded pictures come from the service, which may still be starting (TV start-up,
     // after an update): keep trying for a minute instead of leaving the picture out.
-    if (/^files\//.test(CFG.background) && ++tries <= 30) {
+    if (uploaded && ++tries <= 30) {
       setTimeout(function () { if (mine === bgLoading) { img.src = src + '?t=' + tries; } }, 2000);
     }
   };
-  img.src = src;
+  img.src = copy || src;
   applyTone();
 }
