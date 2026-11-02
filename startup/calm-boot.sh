@@ -25,13 +25,13 @@ mkdir /tmp/tvhome-calm 2>/dev/null || exit 0   # already done this boot (/tmp is
 
 undo=
 # Lower every listed service that's running, including ones that start later, until the time is up.
+# One pgrep for all the names: one call per name costs ~1 s of CPU per round on a busy TV.
+pat=$(echo $CALM_PROCS | tr ' ' '|')
 calm() {
-  for name in $CALM_PROCS; do
-    for pid in $(pgrep -x "$name"); do
-      case " $undo " in *" $pid:"*) continue ;; esac
-      was=$(awk '{ print $19 }' "/proc/$pid/stat" 2>/dev/null) || continue
-      renice 10 -p "$pid" >/dev/null 2>&1 && undo="$undo $pid:$was"
-    done
+  for pid in $(pgrep -x "$pat"); do
+    case " $undo " in *" $pid:"*) continue ;; esac
+    was=$(awk '{ print $19 }' "/proc/$pid/stat" 2>/dev/null) || continue
+    renice 10 -p "$pid" >/dev/null 2>&1 && undo="$undo $pid:$was"
   done
 }
 log "boot: LG background services at low priority for ${left}s (from ${up}s)"
