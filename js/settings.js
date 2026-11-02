@@ -585,8 +585,9 @@
     renderTop();
     renderSources();
     root.classList.add('show');
-    // Focus on the next frame: finding a visible control now would force the whole panel's layout (~40 ms).
-    requestAnimationFrame(function () { if (S.open && !S.focus) { restoreFocus('cat:' + S.cat); } });
+    // Start on the section's tab, which is always shown. restoreFocus() would check it's visible,
+    // and that forces the whole panel's layout (~40 ms).
+    setFocus(root.querySelector('[data-k="cat:' + S.cat + '"]'));
   }
 
   function close() {
