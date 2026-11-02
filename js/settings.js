@@ -320,7 +320,8 @@
         if (S.open && S.src === which) {
           var k = S.focus && S.focus.getAttribute('data-k');
           renderSourceList();
-          if (k) { restoreFocus(k); }
+          // only if the redraw removed the focused control: restoreFocus() forces a layout (~30 ms)
+          if (k && !root.contains(S.focus)) { restoreFocus(k); }
         }
       });
       if (S.cache[which] !== entry) { return; } // answered straight away: already drawn above
