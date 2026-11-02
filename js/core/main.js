@@ -156,6 +156,7 @@ function introTiles() {
     Array.prototype.forEach.call(discs, function (d) { d.style.animationDelay = ''; });
   }, 250 + discs.length * 120 + 700);
 }
+// diag:start  timing marks for tools/perf (tools/lean/build.sh leaves this out)
 var perfMarked = {};
 // Tell the service how long something took, for tools/perf: ms, or by default ms since the page
 // began loading (start-up). Start-up marks are sent once per name.
@@ -174,6 +175,7 @@ document.addEventListener('keydown', function (e) {
     setTimeout(function () { perfMark('key-' + name, Math.round(performance.now() - t0)); }, 0);
   });
 }, true);
+// diag:end
 // Fade out the holding screen once everything is ready (or after 4 seconds at most).
 function liftHold() {
   var hold = $('hold'), t0 = Date.now();
@@ -183,13 +185,13 @@ function liftHold() {
     var layout = hadLocalLayout || svc.ready || svc.state === 'none' || svc.state === 'notroot';
     var tiles = pluginsKnown && !pluginsLoading();       // the plugins' tiles are in place
     var icons = Array.prototype.every.call($('dock').getElementsByTagName('img'), function (i) { return i.complete; });
-    // how long each part took, for tools/perf
-    if (bgReady) { perfMark('bg'); }
-    if (layout) { perfMark('layout'); }
-    if (tiles) { perfMark('tiles'); }
-    if (icons) { perfMark('icons'); }
+    // how long each part took, for tools/perf   // diag
+    if (bgReady) { perfMark('bg'); }   // diag
+    if (layout) { perfMark('layout'); }   // diag
+    if (tiles) { perfMark('tiles'); }   // diag
+    if (icons) { perfMark('icons'); }   // diag
     if (!(bgReady && layout && tiles && icons) && Date.now() - t0 < 4000) { setTimeout(check, 80); return; }
-    perfMark(document.hidden ? 'ready-hidden' : 'ready');
+    perfMark(document.hidden ? 'ready-hidden' : 'ready');   // diag
     // preloaded in the background: nothing to see, so it's simply gone when TV Home is opened
     if (document.hidden) { hold.style.display = 'none'; introPending = true; return; }
     // two frames, so the finished screen has been painted underneath before it's revealed
