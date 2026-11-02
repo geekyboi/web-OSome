@@ -236,7 +236,9 @@
     });
   }
 
+  var drawnKey = null;   // the layout and section the list was last drawn for
   function renderList() {
+    drawnKey = JSON.stringify(S.layout) + '|' + S.cat;
     var c = S.layout[S.cat];
     $('s-lh').textContent = 'In ' + (c ? c.label : '') + ' (' + ((c && c.tiles.length) || 0) + ')';
     var host = $('s-list');
@@ -576,8 +578,15 @@
     S.resetArmed = false;
     S.cache = {};
     S.focus = null;
+    var lit = root.querySelectorAll('.sfocus');
+    for (var i = 0; i < lit.length; i++) { lit[i].classList.remove('sfocus'); }
+    // Rebuilding the rows and icons takes ~55 ms, so reuse them when the layout hasn't changed.
+    if (drawnKey !== JSON.stringify(S.layout) + '|' + S.cat) { renderCats(); renderList(); }
+    renderTop();
+    renderSources();
     root.classList.add('show');
-    renderAll('cat:' + S.cat);
+    // Focus on the next frame: finding a visible control now would force the whole panel's layout (~40 ms).
+    requestAnimationFrame(function () { if (S.open && !S.focus) { restoreFocus('cat:' + S.cat); } });
   }
 
   function close() {
@@ -592,7 +601,7 @@
 
   // Icons arrived in the background: redraw the lists, keeping focus (and any rename in progress).
   function iconsChanged() {
-    if (!S.open) { return; }
+    if (!S.open) { drawnKey = null; return; }   // redraw the rows next time it opens
     var k = S.focus && S.focus.getAttribute('data-k');
     if (S.renaming < 0) { renderList(); }
     renderSourceList();
