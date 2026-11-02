@@ -218,8 +218,24 @@ function liftHold() {
     });
   })();
 }
+// While the TV is still busy after a full start, moves jump instead of animating (class "lite"),
+// so each step costs one cheap frame. Back to normal once it's under 60% three checks running.
+var liteOn = false;
+function liteWhileBusy() {
+  if (liteOn) { return; }
+  liteOn = true;
+  document.documentElement.classList.add('lite');
+  var calm = 0, t0 = Date.now();
+  (function ask() {
+    luna(SVC + 'busy', {}, function (r) {
+      calm = r && r.cpu != null && r.cpu >= 60 && r.uptime < 120 ? 0 : calm + 1;
+      if (calm >= 3 || Date.now() - t0 > 90000) { document.documentElement.classList.remove('lite'); return; }
+      setTimeout(ask, 700);
+    }, 1000);
+  })();
+}
 // Just after a full start the TV is flat out for a while and the remote feels uneven, so keep the
-// loading screen up until it calms down (under 60% busy twice running), for at most 10 s.
+// loading screen up until it calms down (under 60% busy three times running), for at most 10 s.
 // Any other start goes straight on: the TV has been on a while, or there's no service to ask.
 function waitCalm(fn) {
   var t0 = Date.now(), calm = 0;
@@ -227,7 +243,8 @@ function waitCalm(fn) {
     luna(SVC + 'busy', {}, function (r) {
       var busy = r && r.returnValue !== false && r.uptime > 0 && r.uptime < 120 && r.cpu != null && r.cpu >= 60;
       calm = busy || pluginsAwaitingData() ? 0 : calm + 1;   // the tiles' data may still be on its way
-      if (calm >= 2 || (r && r.uptime >= 120) || !r || r.cpu == null || Date.now() - t0 > 10000) { fn(); return; }
+      if (busy) { liteWhileBusy(); }
+      if (calm >= 3 || (r && r.uptime >= 120) || !r || r.cpu == null || Date.now() - t0 > 10000) { fn(); return; }
       ask();
     }, 1000);
   })();

@@ -54,6 +54,9 @@ open_home() {
     esac
     log "${fg:-nothing} in front after ${WAKE_WAIT}s"
   fi
+  # at a full start LG usually opens TV Home itself before this script runs: opening it again costs
+  # a relaunch just as the TV is at its busiest
+  if [ "$1" = boot ] && [ "$(foreground)" = "$APP" ]; then log "boot: $APP already in front"; return; fi
   if [ "$SKIP_IF_HDMI" = 1 ]; then
     fg=$(foreground)
     case "$fg" in

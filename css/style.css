@@ -705,3 +705,7 @@ html, body {
 }
 #shift #bg { left: -4px; top: -4px; width: 1928px; height: 1088px; }   /* spare edge, so the move never shows a border */
 
+
+/* ---------- just after a full start, while the TV is still busy (js/core/main.js liteWhileBusy):
+   moves jump instead of animating, so each step costs one cheap frame ---------- */
+.lite #dock, .lite #dock *, .lite .plugin, .lite .plugin * { transition: none !important; animation: none !important; }
