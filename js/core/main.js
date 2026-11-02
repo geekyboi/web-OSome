@@ -208,6 +208,7 @@ function liftHold() {
     // preloaded in the background: nothing to see, so it's simply gone when TV Home is opened
     if (document.hidden) { hold.style.display = 'none'; introPending = true; return; }
     waitCalm(function () {
+      perfMark('shown');   // diag
       // two frames, so the finished screen has been painted underneath before it's revealed
       requestAnimationFrame(function () { requestAnimationFrame(function () {
         hold.classList.add('out');

@@ -8,7 +8,12 @@
 #
 # Settings:
 BOOT_CALM=120      # seconds after power-on. 0 = off.
-CALM_PROCS="sdx iepg iot-client ss.gateway pbs iconnectivity"
+# process names as pgrep -x sees them (the first 15 characters); ones missing on a TV are skipped.
+# Not here: anything that draws the screen, plays sound or video, reads the remote, or the luna bus.
+CALM_PROCS="sdx iepg iot-client ss.gateway pbs iconnectivity
+  admanager iotjs run-iot-js-serv nudge tvlinkcmdprocess tvlink-network- user-context-ma
+  ocpservice sportsalarm nlpmanager tts voiceinput_hidr dmr ssdp-discovery broadcast-conf
+  captureservice performer browser-service com.webos.chrom chromecast"
 LOG=/tmp/tvhome-autostart.log
 
 log() { echo "$(date '+%Y-%m-%d %H:%M:%S') $*" >> "$LOG"; }
@@ -19,13 +24,23 @@ left=$((BOOT_CALM - up))
 mkdir /tmp/tvhome-calm 2>/dev/null || exit 0   # already done this boot (/tmp is emptied at start-up)
 
 undo=
-for name in $CALM_PROCS; do
-  for pid in $(pgrep -x "$name"); do
-    was=$(awk '{ print $19 }' "/proc/$pid/stat" 2>/dev/null) || continue
-    renice 10 -p "$pid" >/dev/null 2>&1 && undo="$undo $pid:$was"
+# Lower every listed service that's running, including ones that start later, until the time is up.
+calm() {
+  for name in $CALM_PROCS; do
+    for pid in $(pgrep -x "$name"); do
+      case " $undo " in *" $pid:"*) continue ;; esac
+      was=$(awk '{ print $19 }' "/proc/$pid/stat" 2>/dev/null) || continue
+      renice 10 -p "$pid" >/dev/null 2>&1 && undo="$undo $pid:$was"
+    done
   done
+}
+log "boot: LG background services at low priority for ${left}s (from ${up}s)"
+end=$((up + left))
+while :; do
+  calm
+  read now _ < /proc/uptime; now=${now%.*}
+  [ "$now" -ge "$end" ] && break
+  sleep 2
 done
-log "boot: $CALM_PROCS at low priority for ${left}s (from ${up}s)"
-sleep "$left"
 for x in $undo; do renice "${x#*:}" -p "${x%%:*}" >/dev/null 2>&1; done
-log "boot: priorities back to normal"
+log "boot: priorities back to normal ($(echo $undo | wc -w) processes)"
