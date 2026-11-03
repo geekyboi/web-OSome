@@ -54,9 +54,13 @@ function writeRepo(dir, sub, ipk, note) {
       iconUri: pages + sub + 'icon.png',
       manifestUrl: 'releases/latest.json',
       shortDescription: desc,
+      fullDescriptionUrl: 'description.html',
       category: 'launcher'
     }]
   }, null, 2) + '\n');
+  // the Channel shows this as HTML; bare text gets its first line cut off, so use paragraphs
+  fs.writeFileSync(path.join(dir, 'description.html'), '<p>A lighter home screen for LG webOS TVs: no ads or tracking, less RAM and CPU.</p>\n' +
+    '<p>' + note + '</p>\n<p>After installing, run startup/install.sh once as root to open TV Home at power-on and enable the phone editor.</p>\n');
   console.log('Repository in ' + dir + ' -> ' + ipk);
 }
 
