@@ -218,22 +218,6 @@ function liftHold() {
     });
   })();
 }
-// While the TV is still busy after a full start, moves jump instead of animating (class "lite"),
-// so each step costs one cheap frame. Back to normal once it's under 60% three checks running.
-var liteOn = false;
-function liteWhileBusy() {
-  if (liteOn) { return; }
-  liteOn = true;
-  document.documentElement.classList.add('lite');
-  var calm = 0, t0 = Date.now();
-  (function ask() {
-    luna(SVC + 'busy', {}, function (r) {
-      calm = r && r.cpu != null && r.cpu >= 60 && r.uptime < 120 ? 0 : calm + 1;
-      if (calm >= 3 || Date.now() - t0 > 90000) { document.documentElement.classList.remove('lite'); perfMark('lite-off'); return; }   // diag: the mark
-      setTimeout(ask, 700);
-    }, 1000);
-  })();
-}
 // Just after a full start the TV is flat out for a while and the remote feels uneven, so keep the
 // loading screen up until HOLD_UNTIL seconds after power-on (just after the Homebrew Channel's
 // start-up scripts, ~53-55 s, all run at once), the tiles have their data and the TV calms down
@@ -247,14 +231,16 @@ function waitCalm(fn) {
       var known = r && r.returnValue !== false && r.uptime > 0 && r.cpu != null;
       var busy = known && r.uptime < 120 && r.cpu >= 60;
       calm = busy || pluginsAwaitingData() ? 0 : calm + 1;   // the tiles' data may still be on its way
-      if (busy) { liteWhileBusy(); }
       // no answer yet: just after a full start the service may still be restarting with root, so try
       // again for a few seconds, unless the page already knows there's no service to ask
       if (!known && !(r && r.uptime >= 120) && svc.state !== 'none' && svc.state !== 'notroot' && Date.now() - t0 < 12000) {
         setTimeout(ask, 300); return;
       }
       var early = known && r.uptime < HOLD_UNTIL;
-      if (!known || r.uptime >= 120 || (calm >= 3 && !early) || Date.now() - t0 > 25000) { fn(); return; }
+      if (!known || r.uptime >= 120 || (calm >= 3 && !early) || Date.now() - t0 > 25000) {
+        if (!known) { perfMark('hold-noanswer'); }   // diag
+        fn(); return;
+      }
       ask();
     }, 3000);   // on a TV this busy the answer can take over a second
   })();
