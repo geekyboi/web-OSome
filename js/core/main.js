@@ -235,9 +235,11 @@ function liteWhileBusy() {
   })();
 }
 // Just after a full start the TV is flat out for a while and the remote feels uneven, so keep the
-// loading screen up until the tiles have their data and the TV calms down (under 60% busy three
-// times running), for at most 10 s. Any other start goes straight on: the TV has been on a while,
-// or there's no service to ask.
+// loading screen up until HOLD_UNTIL seconds after power-on (just after the Homebrew Channel's
+// start-up scripts, ~53-55 s, all run at once), the tiles have their data and the TV calms down
+// (under 60% busy three times running), for at most 25 s. Any other start goes straight on: the
+// TV has been on a while, or there's no service to ask.
+var HOLD_UNTIL = 57;
 function waitCalm(fn) {
   var t0 = Date.now(), calm = 0;
   (function ask() {
@@ -246,7 +248,13 @@ function waitCalm(fn) {
       var busy = known && r.uptime < 120 && r.cpu >= 60;
       calm = busy || pluginsAwaitingData() ? 0 : calm + 1;   // the tiles' data may still be on its way
       if (busy) { liteWhileBusy(); }
-      if (!known || r.uptime >= 120 || calm >= 3 || Date.now() - t0 > 10000) { fn(); return; }
+      // no answer yet: just after a full start the service may still be restarting with root, so try
+      // again for a few seconds, unless the page already knows there's no service to ask
+      if (!known && !(r && r.uptime >= 120) && svc.state !== 'none' && svc.state !== 'notroot' && Date.now() - t0 < 4000) {
+        setTimeout(ask, 300); return;
+      }
+      var early = known && r.uptime < HOLD_UNTIL;
+      if (!known || r.uptime >= 120 || (calm >= 3 && !early) || Date.now() - t0 > 25000) { fn(); return; }
       ask();
     }, 1000);
   })();

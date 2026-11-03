@@ -142,9 +142,11 @@ function startLuna() {
   // How busy the TV is: { uptime (s since power-on), cpu (% of the whole TV over the last 0.3 s) }.
   // TV Home keeps its loading screen up after a full start until the TV has calmed down.
   service.register('busy', function (m) {
-    var a = cpuTicks();
+    var a = cpuTicks(), up0 = 0;
+    try { up0 = parseFloat(fs.readFileSync('/proc/uptime', 'utf8')); } catch (e) { /* not Linux */ }
+    if (!(up0 > 0 && up0 < 120)) { m.respond({ returnValue: true, uptime: up0, cpu: null }); return; }   // not a fresh start: answer at once
     setTimeout(function () {
-      var b = cpuTicks(), up = 0;
+      var b = cpuTicks(), up = up0;
       try { up = parseFloat(fs.readFileSync('/proc/uptime', 'utf8')); } catch (e) { /* not Linux */ }
       var cpu = a && b && b[0] > a[0] ? Math.round(100 - (b[1] - a[1]) * 100 / (b[0] - a[0])) : null;
       m.respond({ returnValue: true, uptime: up, cpu: cpu });
