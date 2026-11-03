@@ -195,7 +195,7 @@ function liftHold() {
   (function check() {
     // the saved copy is the last layout the service sent, so don't wait for the service to start (it rarely differs)
     var layout = hadLocalLayout || svc.ready || svc.state === 'none' || svc.state === 'notroot';
-    var tiles = pluginsKnown && !pluginsLoading() && !pluginsAwaitingData();   // the plugins' tiles are in place, with their data
+    var tiles = pluginsKnown && !pluginsLoading();       // the plugins' tiles are in place (after a full start waitCalm also waits for their data)
     var icons = Array.prototype.every.call($('dock').getElementsByTagName('img'), function (i) { return i.complete; });
     // how long each part took, for tools/perf   // diag
     if (bgReady) { perfMark('bg'); }   // diag
@@ -235,11 +235,9 @@ function liteWhileBusy() {
   })();
 }
 // Just after a full start the TV is flat out for a while and the remote feels uneven, so keep the
-// loading screen up until HOLD_UNTIL seconds after power-on (just after the Homebrew Channel's
-// start-up scripts, ~53-55 s, all run at once) and until it calms down (under 60% busy three
-// times running), for at most 25 s. Any other start goes straight on: the TV has been on a while,
+// loading screen up until the tiles have their data and the TV calms down (under 60% busy three
+// times running), for at most 10 s. Any other start goes straight on: the TV has been on a while,
 // or there's no service to ask.
-var HOLD_UNTIL = 57;
 function waitCalm(fn) {
   var t0 = Date.now(), calm = 0;
   (function ask() {
@@ -248,8 +246,7 @@ function waitCalm(fn) {
       var busy = known && r.uptime < 120 && r.cpu >= 60;
       calm = busy || pluginsAwaitingData() ? 0 : calm + 1;   // the tiles' data may still be on its way
       if (busy) { liteWhileBusy(); }
-      var early = known && r.uptime < HOLD_UNTIL;
-      if (!known || r.uptime >= 120 || (calm >= 3 && !early) || Date.now() - t0 > 25000) { fn(); return; }
+      if (!known || r.uptime >= 120 || calm >= 3 || Date.now() - t0 > 10000) { fn(); return; }
       ask();
     }, 1000);
   })();
