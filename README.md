@@ -12,7 +12,7 @@ switch to the right HDMI input.
 Built for my LG OLED55A2 (webOS 23). It'll probably work on other webOS TVs but I
 haven't tried. On the TV it shows up as **TV Home** (its old name).
 
-## What it does
+## What it's fun
 
 - Rows of app tiles (Streaming, Gaming, Other). Arrow keys and the Magic Remote pointer both work.
 - A tile can open an app or HDMI input, call a Home Assistant webhook, or both.
@@ -20,15 +20,6 @@ haven't tried. On the TV it shows up as **TV Home** (its old name).
 - Opens when the TV turns on.
 - Dims when idle and nudges the screen a pixel or two now and then, to be kind to the OLED.
 - **Rooted TVs only:** edit everything from your phone (scan a QR code on the TV), use the TV's real app icons, and take over the Home button.
-
-## Try it on your computer
-
-```
-python3 -m http.server 8000
-```
-
-Open http://localhost:8000. Arrow keys, Enter and the mouse work. Tiles say what they
-*would* launch instead of launching.
 
 ## Before you start: root the TV (optional, but worth it)
 
@@ -38,6 +29,8 @@ the Homebrew Channel installed. webOS Brew's [rooting guide](https://www.webosbr
 tells you which method works for your TV and firmware, so follow that rather than me.
 
 ## Put it on the TV
+
+### Either
 
 You need the TV in Developer Mode and LG's `ares` tools
 ([webOS Brew's guide](https://www.webosbrew.org/devmode/) explains it better than I can).
@@ -60,12 +53,10 @@ No computer or `ares` tools needed, and the TV gets updates from there too.
    For the build with the `tools/perf` diagnostics, use
    `https://geekyboi.github.io/web-OSome/full/apps.json` instead.
 2. Back in the app list, pick **TV Home** and press **Install** (later, **Update**).
-3. Once, in a root shell on the TV (webOS Dev Manager → Terminal), run:
+3. Once, in a root shell on the TV ([webOS Dev Manager](https://github.com/webosbrew/dev-manager-desktop) → Terminal), run:
    ```
    sh /media/developer/apps/usr/palm/applications/net.local.tvhome/startup/install.sh
    ```
-   It's already in the package, but the Homebrew Channel doesn't run it. It makes TV Home
-   open at power-on and gives the phone editor's service root.
 
 Still set up by hand, as before: the Home Assistant automation, the Home button
 (LG Input Hook, see [the guide](docs/GUIDE.md#5-the-home-button-needs-root)) and the
