@@ -51,10 +51,29 @@ ares-launch  --device tv net.local.tvhome
 
 For a leaner install without the diagnostics, run `web-osome/tools/lean/build.sh` instead of `ares-package` (more in [the guide](docs/GUIDE.md#3-install-on-the-tv)).
 
-**Rooted TV with the Homebrew Channel:** add `https://geekyboi.github.io/web-osome/apps.json`
-in its Settings → Add repository, then install TV Home from its list (lean build; use
-`.../full/apps.json` for the build with diagnostics). It gets updates from there too. Then
-run `startup/install.sh` once (below): the Homebrew Channel doesn't run it.
+### Or install from the Homebrew Channel (rooted TVs)
+
+No computer or `ares` tools needed, and the TV gets updates from there too.
+
+1. In the Homebrew Channel, open **Settings → Add repository** and enter
+   `https://geekyboi.github.io/web-osome/apps.json` (the lean build).
+   For the build with the `tools/perf` diagnostics, use
+   `https://geekyboi.github.io/web-osome/full/apps.json` instead.
+2. Back in the app list, pick **TV Home** and press **Install** (later, **Update**).
+3. Once, in a root shell on the TV (webOS Dev Manager → Terminal), run:
+   ```
+   sh /media/developer/apps/usr/palm/applications/net.local.tvhome/startup/install.sh
+   ```
+   It's already in the package, but the Homebrew Channel doesn't run it. It makes TV Home
+   open at power-on and gives the phone editor's service root.
+
+Still set up by hand, as before: the Home Assistant automation, the Home button
+(LG Input Hook, see [the guide](docs/GUIDE.md#5-the-home-button-needs-root)) and the
+`tools/perf` logger.
+
+The repository is rebuilt by the release workflow on every `v*` tag, pointing at that
+release's packages. It needs **Settings → Pages → Source: GitHub Actions** set once on
+the GitHub repo.
 
 Heads up: Developer Mode has a time limit, The TV removes the app when it does. You need to Renew it
 in the Developer Mode app if you're TV is not rooted
