@@ -51,6 +51,11 @@ ares-launch  --device tv net.local.tvhome
 
 For a leaner install without the diagnostics, run `web-osome/tools/lean/build.sh` instead of `ares-package` (more in [the guide](docs/GUIDE.md#3-install-on-the-tv)).
 
+**Rooted TV with the Homebrew Channel:** add `https://geekyboi.github.io/web-osome/apps.json`
+in its Settings → Add repository, then install TV Home from its list (lean build; use
+`.../full/apps.json` for the build with diagnostics). It gets updates from there too. Then
+run `startup/install.sh` once (below): the Homebrew Channel doesn't run it.
+
 Heads up: Developer Mode has a time limit, The TV removes the app when it does. You need to Renew it
 in the Developer Mode app if you're TV is not rooted
 

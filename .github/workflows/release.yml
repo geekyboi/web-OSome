@@ -1,6 +1,7 @@
 # Push a tag like v1.0.0 and this makes a GitHub release (or refreshes its files if it exists) with two packages:
 # the normal one (with the tools/perf diagnostics), the lean one (tools/lean/build.sh),
-# and a zip of the shell scripts and config files.
+# and a zip of the shell scripts and config files. It also updates the Homebrew Channel
+# repository on GitHub Pages (tools/hbrepo/make-repo.js), so TVs that added it get the update.
 name: Release
 on:
   push:
@@ -39,3 +40,21 @@ jobs:
           - \`tvhome-*-scripts-and-config.zip\`: startup scripts, Home Assistant config, perf tools and app/service config, to use from a computer.
 
           Both are the same app, so installing one replaces the other."
+      - name: Make the Homebrew Channel repository
+        run: node tools/hbrepo/make-repo.js ../dist "$RUNNER_TEMP/hbrepo" "$GITHUB_REF_NAME" "$GITHUB_REPOSITORY"
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: ${{ runner.temp }}/hbrepo
+  # needs Settings > Pages > Source: GitHub Actions (once)
+  pages:
+    needs: release
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - id: deploy
+        uses: actions/deploy-pages@v4
