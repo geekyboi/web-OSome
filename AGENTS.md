@@ -43,6 +43,7 @@ Everything works without the service, with fewer features: the app falls back to
 | `startup/` | Shell scripts that open the app at power-on on rooted TVs (Homebrew Channel `init.d` hook). |
 | `tools/perf/` | RAM, CPU and start-up time logging on the TV, a launch benchmark and a report (see its README). |
 | `tools/lean/` | `build.sh`: a lean copy and package with the diagnostics left out (code between `diag:start` and `diag:end`, and lines ending in `// diag`), and no tools or docs. |
+| `tools/hbrepo/` | `make-repo.js`: the Homebrew Channel repository (`apps.json` + manifest) for a release. The release workflow publishes it to GitHub Pages. |
 | `home-assistant/` | Example automations, and an optional extra-apps list kept in Home Assistant. |
 
 **The browser files share one global scope.** There are no modules: each file is a plain
