@@ -238,7 +238,7 @@ function waitCalm(fn) {
       }
       var early = known && r.uptime < HOLD_UNTIL;
       if (!known || r.uptime >= 120 || (calm >= 3 && !early) || Date.now() - t0 > 25000) {
-        if (!known) { perfMark('hold-noanswer'); }   // diag
+        if (!known && !(r && r.uptime >= 120)) { perfMark('hold-noanswer'); }   // diag
         fn(); return;
       }
       ask();
