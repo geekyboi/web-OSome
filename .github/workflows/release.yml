@@ -1,4 +1,4 @@
-# Push a tag like v1.0.0 and this makes a GitHub release with two packages:
+# Push a tag like v1.0.0 and this makes a GitHub release (or refreshes its files if it exists) with two packages:
 # the normal one (with the tools/perf diagnostics), the lean one (tools/lean/build.sh),
 # and a zip of the shell scripts and config files.
 name: Release
@@ -32,6 +32,8 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          # moved a tag that already has a release (git push -f origin <tag>): replace its files
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then gh release upload "$GITHUB_REF_NAME" ../dist/* --clobber; exit 0; fi
           gh release create "$GITHUB_REF_NAME" ../dist/* --title "TV Home $GITHUB_REF_NAME" --notes "- \`net.local.tvhome_*_all.ipk\`: normal build, with the diagnostics for tools/perf.
           - \`net.local.tvhome_*_all-lean.ipk\`: lean build, no diagnostics, tools or docs.
           - \`tvhome-*-scripts-and-config.zip\`: startup scripts, Home Assistant config, perf tools and app/service config, to use from a computer.
