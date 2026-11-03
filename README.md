@@ -56,9 +56,9 @@ For a leaner install without the diagnostics, run `web-osome/tools/lean/build.sh
 No computer or `ares` tools needed, and the TV gets updates from there too.
 
 1. In the Homebrew Channel, open **Settings → Add repository** and enter
-   `https://geekyboi.github.io/web-osome/apps.json` (the lean build).
+   `https://geekyboi.github.io/web-OSome/apps.json` (the lean build).
    For the build with the `tools/perf` diagnostics, use
-   `https://geekyboi.github.io/web-osome/full/apps.json` instead.
+   `https://geekyboi.github.io/web-OSome/full/apps.json` instead.
 2. Back in the app list, pick **TV Home** and press **Install** (later, **Update**).
 3. Once, in a root shell on the TV (webOS Dev Manager → Terminal), run:
    ```
