@@ -16,6 +16,7 @@
      plugin      (sub)      { id, topic }   a plugin's data, e.g. the calendar's events (its service.js: api.topic)
      pluginCall             { id, method, params }   a one-off request to a plugin (its service.js: api.method)
      activity    (sub)      { cause }   a volume or mute key was pressed (the system UI takes those keys, so the app never sees them)
+     busy                   { uptime, cpu }   seconds since power-on, and how busy the whole TV is (%)
      perfMark               { name, ms }   TV Home's start-up time, logged for tools/perf if its logger is installed   (diag)
 
    The tiles (clock, weather, calendar, bins, now playing...) are plugins: folders in the
@@ -50,5 +51,14 @@ plugins.refreshPlugins();
 setInterval(function () { try { plugins.refreshPlugins(); } catch (e) { log('plugins', e.stack || e.message); } }, 30 * 1000);
 
 luna.startLuna();
+
+// Just after a full start: LG's background services at low priority for a while (startup/calm-boot.sh).
+// This service starts ~20 s before the boot scripts LG runs, so it's done from here first.
+if (IS_ROOT) {
+  try {
+    require('child_process').spawn('sh', [require('path').join(config.APP_DIR, 'startup', 'calm-boot.sh')],
+      { detached: true, stdio: 'ignore' }).unref();
+  } catch (e) { log('calm-boot', e.message); }
+}
 
 module.exports = { server: server, _test: { cleanDoc: layout.cleanDoc, password: function () { return auth.password; }, refreshPlugins: plugins.refreshPlugins, plugins: function () { return plugins.publicList(); }, doc: function () { return layout.doc; } } };

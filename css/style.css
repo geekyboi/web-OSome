@@ -704,4 +704,3 @@ html, body {
   width: 1920px; height: 1080px;
 }
 #shift #bg { left: -4px; top: -4px; width: 1928px; height: 1088px; }   /* spare edge, so the move never shows a border */
-

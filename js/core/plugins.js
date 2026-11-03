@@ -49,6 +49,7 @@ function pluginSubscribe(p, s) {
   if (!svc.following || s.bridge || p.state !== 'on') { return; }
   s.bridge = lunaSub(SVC + 'plugin', { id: p.meta.id, topic: s.topic }, function (r) {
     if (p.state !== 'on') { return; }
+    s.got = true;
     try { s.cb(r); } catch (e) { if (window.console) { console.error('Plugin ' + p.meta.id + ' (' + s.topic + '):', e); } }
   });
 }
@@ -241,6 +242,13 @@ function discoverPlugins() {
   try { cached = JSON.parse(window.localStorage.getItem(PLUGIN_STORE) || 'null'); } catch (e) { cached = null; }
   if (cached && cached.length) { setPlugins(cached); }
   // the service's list arrives in follow(); scanPluginFolder() runs if there's no service
+}
+// Is a tile still waiting for its first data from the service (weather, calendar...)?
+function pluginsAwaitingData() {
+  return Object.keys(plugins).some(function (k) {
+    var p = plugins[k];
+    return p.state === 'on' && p.subs.some(function (s) { return s.bridge && !s.got; });
+  });
 }
 // Is any plugin still loading?
 function pluginsLoading() {

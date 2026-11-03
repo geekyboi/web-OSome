@@ -61,6 +61,18 @@ function fit() {
 /* ---------------------------------------------------------------
    Input
 ---------------------------------------------------------------- */
+// A held arrow repeats faster than a busy TV can draw (just after switch-on). Repeats that arrive
+// before the last move has reached the screen are dropped, so the focus stops where you let go
+// instead of carrying on for up to a second. Single presses are never dropped.
+var moveShown = true;
+document.addEventListener('keydown', function (e) {
+  var k = e.keyCode;
+  if (k >= KEY.LEFT && k <= KEY.DOWN) {
+    if (e.repeat && !moveShown) { e.preventDefault(); e.stopImmediatePropagation(); return; }
+    moveShown = false;
+    requestAnimationFrame(function () { moveShown = true; });
+  }
+}, true);
 document.addEventListener('keydown', function (e) {
   wake();
   var k = e.keyCode;
@@ -183,23 +195,54 @@ function liftHold() {
   (function check() {
     // the saved copy is the last layout the service sent, so don't wait for the service to start (it rarely differs)
     var layout = hadLocalLayout || svc.ready || svc.state === 'none' || svc.state === 'notroot';
-    var tiles = pluginsKnown && !pluginsLoading();       // the plugins' tiles are in place
+    var tiles = pluginsKnown && !pluginsLoading();       // the plugins' tiles are in place (after a full start waitCalm also waits for their data)
     var icons = Array.prototype.every.call($('dock').getElementsByTagName('img'), function (i) { return i.complete; });
     // how long each part took, for tools/perf   // diag
     if (bgReady) { perfMark('bg'); }   // diag
     if (layout) { perfMark('layout'); }   // diag
     if (tiles) { perfMark('tiles'); }   // diag
     if (icons) { perfMark('icons'); }   // diag
-    if (!(bgReady && layout && tiles && icons) && Date.now() - t0 < 4000) { setTimeout(check, 80); return; }
+    // never reveal a half-built screen (just after switch-on this takes ~6 s); 15 s is only a safety net
+    if (!(bgReady && layout && tiles && icons) && Date.now() - t0 < 15000) { setTimeout(check, 80); return; }
     perfMark(document.hidden ? 'ready-hidden' : 'ready');   // diag
     // preloaded in the background: nothing to see, so it's simply gone when TV Home is opened
     if (document.hidden) { hold.style.display = 'none'; introPending = true; return; }
-    // two frames, so the finished screen has been painted underneath before it's revealed
-    requestAnimationFrame(function () { requestAnimationFrame(function () {
-      hold.classList.add('out');
-      introTiles();
-      setTimeout(function () { hold.style.display = 'none'; }, 800);   // not transitionend: it may run while hidden (preloaded)
-    }); });
+    waitCalm(function () {
+      perfMark('shown');   // diag
+      // two frames, so the finished screen has been painted underneath before it's revealed
+      requestAnimationFrame(function () { requestAnimationFrame(function () {
+        hold.classList.add('out');
+        introTiles();
+        setTimeout(function () { hold.style.display = 'none'; }, 800);   // not transitionend: it may run while hidden (preloaded)
+      }); });
+    });
+  })();
+}
+// Just after a full start the TV is flat out for a while and the remote feels uneven, so keep the
+// loading screen up until HOLD_UNTIL seconds after power-on (just after the Homebrew Channel's
+// start-up scripts, ~53-55 s, all run at once), the tiles have their data and the TV calms down
+// (under 60% busy three times running), for at most 25 s. Any other start goes straight on: the
+// TV has been on a while, or there's no service to ask.
+var HOLD_UNTIL = 57;
+function waitCalm(fn) {
+  var t0 = Date.now(), calm = 0;
+  (function ask() {
+    luna(SVC + 'busy', {}, function (r) {
+      var known = r && r.returnValue !== false && r.uptime > 0 && r.cpu != null;
+      var busy = known && r.uptime < 120 && r.cpu >= 60;
+      calm = busy || pluginsAwaitingData() ? 0 : calm + 1;   // the tiles' data may still be on its way
+      // no answer yet: just after a full start the service may still be restarting with root, so try
+      // again for a few seconds, unless the page already knows there's no service to ask
+      if (!known && !(r && r.uptime >= 120) && svc.state !== 'none' && svc.state !== 'notroot' && Date.now() - t0 < 12000) {
+        setTimeout(ask, 300); return;
+      }
+      var early = known && r.uptime < HOLD_UNTIL;
+      if (!known || r.uptime >= 120 || (calm >= 3 && !early) || Date.now() - t0 > 25000) {
+        if (!known && !(r && r.uptime >= 120)) { perfMark('hold-noanswer'); }   // diag
+        fn(); return;
+      }
+      ask();
+    }, 3000);   // on a TV this busy the answer can take over a second
   })();
 }
 
@@ -233,13 +276,30 @@ function init() {
   placeGear();
   wake();
   loadBackground();
-  checkHA();
   setInterval(function () { if (!document.hidden) { checkHA(); } }, 60000);
-  setTimeout(function () { syncIcons(false); }, 1500);
   discoverPlugins();
   connectService();
   liftHold();
-  setTimeout(registerInput, 3000);   // after start-up, so it doesn't slow the first paint
+  // Extras wait until the TV has calmed down: just after switch-on LG's own start-up keeps it busy
+  // for a minute or so, and these would only compete with the screen and the remote.
+  whenQuiet(function () { checkHA(); syncIcons(false); registerInput(); });
+}
+
+// Run fn once the screen has drawn smoothly (no frame over 60 ms apart) for a second, or after a minute.
+function whenQuiet(fn) {
+  var start = Date.now(), calm = Date.now(), last = 0, done = false;
+  // Run fn, once.
+  function go() { if (!done) { done = true; fn(); } }
+  setTimeout(go, 60000);   // also covers a preloaded (hidden) start, when frames don't run
+  // Check the gap since the last frame.
+  function frame(t) {
+    if (done) { return; }
+    if (last && t - last > 60) { calm = Date.now(); }
+    last = t;
+    if (Date.now() - calm >= 1000 && Date.now() - start >= 1500) { go(); return; }
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
 }
 
 init();

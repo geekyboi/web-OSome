@@ -22,6 +22,7 @@ STANDBY_PRELOAD=1  # 1 = when the TV goes to standby, load TV Home again hidden 
                    # LG's Quick Start+ has closed it, so switching on is a quick relaunch (~0.4 s)
                    # rather than a fresh start (~2-5 s). 0 = off. Also off while
                    # /home/root/tvhome-no-preload exists.
+# (LG's background services run at low priority just after a full start: see calm-boot.sh.)
 
 LOG=/tmp/tvhome-autostart.log      # cleared when the TV restarts
 PIDF=/tmp/tvhome-autostart.pid
@@ -53,6 +54,9 @@ open_home() {
     esac
     log "${fg:-nothing} in front after ${WAKE_WAIT}s"
   fi
+  # at a full start LG usually opens TV Home itself before this script runs: opening it again costs
+  # a relaunch just as the TV is at its busiest
+  if [ "$1" = boot ] && [ "$(foreground)" = "$APP" ]; then log "boot: $APP already in front"; return; fi
   if [ "$SKIP_IF_HDMI" = 1 ]; then
     fg=$(foreground)
     case "$fg" in
@@ -111,6 +115,9 @@ was_off() {
     *) return 1 ;;
   esac
 }
+
+# usually already done by TV Home's service, which starts earlier
+sh "$(dirname "$0")/calm-boot.sh" &
 
 while true; do
   # Stream power-state changes. If the subscription drops (e.g. during start-up, before the
