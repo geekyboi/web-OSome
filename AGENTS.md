@@ -40,8 +40,9 @@ Everything works without the service, with fewer features: the app falls back to
 | `example-plugins/hello/` | The smallest working plugin. Not loaded; copy it into `plugins/` to try it. |
 | `service/service.js`, `service/lib/` | The service: `http` (editor and API), `auth` (password, cookies), `layout`, `plugins`, `luna`, `power` (pauses while the TV is off or another app is in front), `homeassistant`. |
 | `service/web/editor/` | The phone editor, one file per part. |
-| `startup/` | Shell scripts that open the app at power-on on rooted TVs (Homebrew Channel `init.d` hook). |
+| `startup/` | Rooted TVs, run from a Homebrew Channel `init.d` hook: `install.sh`/`uninstall.sh` (the hook), `autostart.sh` (power watcher: opens TV Home at power-on and wake, preloads it in standby), `calm-boot.sh` (LG's background services at low priority for 2 minutes after a full start). |
 | `tools/perf/` | RAM, CPU and start-up time logging on the TV, a launch benchmark and a report (see its README). |
+| `.github/workflows/release.yml` | The only workflow: a `v*` tag builds and publishes a release and the Homebrew Channel repo. |
 | `tools/lean/` | `build.sh`: a lean copy and package with the diagnostics left out (code between `diag:start` and `diag:end`, and lines ending in `// diag`), and no tools or docs. |
 | `tools/hbrepo/` | `make-repo.js`: the Homebrew Channel repository (`apps.json` + manifest) for a release. The release workflow publishes it to GitHub Pages. |
 | `home-assistant/` | Example automations, and an optional extra-apps list kept in Home Assistant. |
@@ -65,9 +66,16 @@ All files are optional:
 - `plugin.json`: name, description, version, `order` (its position in its area).
 - `tile.js` and `tile.css`: the tile on the home screen. It calls `TVHOME.plugin({ id, region, html, start, onMinute, ... })`.
   `region` is `'status'` (the clock capsule), `'right'` (the right-hand column) or `'stage'` (placed by its own CSS).
+  A `'right'` tile can be selectable with `onOk`, `canFocus`, `onFocus` and `onKey` (the now-playing bar uses them for its buttons).
 - `service.js`: runs inside the service (Node). It publishes data with `api.topic` and `api.publish`,
   and uses `api.every` and `api.after` for timers, which pause while the TV is off or another app is in front.
 - `editor.js` and `editor.css`: its settings card in the phone editor (`TVHOME_EDITOR.plugin({ id, card })`).
+
+Style tiles with the shared CSS variables at the top of `css/style.css` (glass, focus glow, text
+colours, spacing, motion), not with their own colours, so everything stays in step.
+
+The "now playing" tile reads the Yamaha amp over MusicCast (`plugins/nowplaying/musiccast.js`),
+so Spotify, AirPlay and radio all show up through the amp; there's no Spotify API.
 
 The service rescans `plugins/` every 30 seconds. Adding or deleting a folder is all it
 takes, and the layout reflows by itself. A plugin that throws is caught and logged, and
@@ -85,8 +93,8 @@ the rest of the screen carries on. The full API is in [plugins/README.md](plugin
 
 ## Run and test
 
-There are no automated tests, no linter and no CI. Testing means looking at it, and the
-TV is the test that counts.
+There are no automated tests, no linter and no CI checks (the only workflow is the release,
+below). Testing means looking at it, and the TV is the test that counts.
 
 **On your computer** (a quick look only):
 
@@ -130,7 +138,11 @@ If the editor says the service isn't installed, package it explicitly:
 `/tmp/tvhome-service.log` and the autostart watcher to `/tmp/tvhome-autostart.log`.
 For an everyday install without the diagnostics, use `tools/lean/build.sh` instead of `ares-package` (it packages too). If you add timing or logging code that's only for measuring, mark it `diag` so the lean build drops it.
 To see what a change does to RAM, CPU or start-up time, use `tools/perf/` (see its
-README): a logger that runs on the TV for days, a launch benchmark, and a report.
+README): a logger that runs on the TV for days, a launch benchmark, and a report. The report
+also lists button-to-screen times (`key-*` marks), when the screen was shown after a full
+start (`shown`), and wakes where the standby preload had TV Home ready. It needs the normal
+build (the lean one drops the marks). Measure before and after, on the TV: desktop numbers
+don't carry over. Write-ups of results are kept outside the repo.
 Before you call a change done, check:
 
 - the remote works: Up, Down, Left, Right, OK, Back and the red button, plus the Magic Remote pointer;
@@ -139,6 +151,44 @@ Before you call a change done, check:
 
 Reinstalling replaces the app folder on the TV, so files added there by hand (like
 `launchpoints.json`) are lost. Settings saved by the service survive.
+
+**After a factory reset.** Root (the Homebrew Channel) can survive a reset, but SSH keys are
+wiped and root SSH falls back to the default password `alpine` (put your key back, then restart), and
+`/home/root/.config/tvhome/` (layout and secrets) is gone, so keep a backup of it. To put
+everything back: turn LG's auto update off (a firmware update can remove root for good),
+reinstall the app, copy back `launchpoints.json` and the settings folder, run
+`startup/install.sh`, `sh tools/perf/tvperf.sh install` if you want the logger, then restart
+the TV and check `/tmp/tvhome-autostart.log`. The amp volume overlay patch is a separate
+project ([MusicCast_WebOS](https://github.com/geekyboi/MusicCast_WebOS)), not this repo.
+
+## Releases
+
+Bump `version` in `appinfo.json`, then push a tag like `v1.0.1`. The release workflow makes
+a GitHub release with the normal `.ipk`, the lean `-lean.ipk` and a zip of the scripts and
+config, then rebuilds the Homebrew Channel repo on GitHub Pages (`tools/hbrepo/make-repo.js`:
+lean at `/apps.json`, normal at `/full/apps.json`). Force-pushing a tag that already has a
+release replaces its files. Pages URLs are case-sensitive (`geekyboi.github.io/web-OSome/`). Pages needs **Settings → Pages →
+Source: GitHub Actions** set once on the GitHub repo.
+
+## Start-up and standby
+
+This is the fiddliest part: read it before touching `startup/` or the start-up code in `main.js`.
+
+- With LG's *Quick Start+*, switching on is usually a wake from standby, not a boot.
+  `autostart.sh` watches the power state. On a wake it gives *Last source* `WAKE_WAIT`
+  seconds to open TV Home itself before stepping in (opening it twice strands LG's loading
+  cover). At a full start it doesn't launch again if TV Home is already in front.
+- **Standby preload:** LG closes TV Home on standby, so the watcher loads it again hidden
+  (switching on is then ~0.4 s, not 2-5 s). LG sometimes closes it a second time, so it
+  re-checks every 10 s, up to 3 loads. `touch /home/root/tvhome-no-preload` turns it off.
+- **First two minutes after a full start** the TV is flat out with LG's own services.
+  `calm-boot.sh` runs a fixed list of them at low priority until 120 s after power-on (never
+  anything that draws, plays, reads the remote or the luna bus). The loading screen stays up
+  until the tiles' data is in and the service's `busy` method says the TV has calmed down.
+  Held-arrow repeats that arrive before the last move was drawn are dropped, and extras
+  (Home Assistant check, icon sync) wait until frames are smooth. Don't add work to this window.
+- **Pixel shift** counts steps (one per 5 minutes on screen), not the clock, so returning
+  from another app doesn't make the screen jump.
 
 ## Conventions
 
@@ -166,6 +216,9 @@ Reinstalling replaces the app folder on the TV, so files added there by hand (li
   - Stop timers in `stop()`, and pause work while TV Home isn't in front (`onShow` tells you it's back).
   - In the service, use `api.every` so polling stops while the TV is off or another app is in front.
   - Avoid always-running CSS animations, large images and re-rendering the whole dock.
+  - On a key press, don't force layout (reading `offsetWidth` and the like after a change).
+    Reuse rows and skip rebuilding the dock or Settings when nothing changed. Each forced
+    layout costs tens of ms on the TV.
 - **No private data in commits.** Don't commit IP addresses, Home Assistant URLs or tokens,
   webhook ids, calendar links, passwords, `launchpoints.json`, `.ipk` files or personal
   photos. Secrets belong in the phone editor, which saves them on the TV. `.gitignore`
@@ -179,6 +232,9 @@ Reinstalling replaces the app folder on the TV, so files added there by hand (li
 - **Running things as root.** The Homebrew Channel calls (`js/core/tv-icons.js`,
   `js/settings-sources.js`) run fixed commands. Never build a shell command from user
   input or app data.
+- **Don't restart or poke LG's system processes.** `closeAllSystemUI` restarted the TV, and
+  restarting the surface manager or WebAppMgr broke the Magic Remote pointer or rebooted the
+  TV (seen with the amp volume patch). If something can't be done through luna, leave it.
 - **Startup scripts must exit straight away.** `startup/install.sh` writes an `init.d`
   hook that backgrounds the watcher and exits. A hook that blocks puts the Homebrew
   Channel into failsafe mode at the next boot.

@@ -244,6 +244,7 @@ music playing with the screen off) or the screen saver.
 LG's *Quick Start+* closes TV Home every time the TV goes into standby, so switching on would
 start it from scratch (2 to 5 seconds, with the TV flat out). So 5 seconds into standby the
 watcher loads TV Home again, hidden, and switching on brings it up in about 0.4 seconds.
+If LG closes it again a moment later, the watcher loads it again (up to 3 times).
 It stays in memory during standby (about 55 MB). Turn it off with `STANDBY_PRELOAD=0`, or
 straight away with `touch /home/root/tvhome-no-preload`.
 
