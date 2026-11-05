@@ -12,12 +12,12 @@ switch to the right HDMI input.
 Built for my LG OLED55A2 (webOS 23). It'll probably work on other webOS TVs but I
 haven't tried. On the TV it shows up as **TV Home** (its old name).
 
-## What it's fun
+## What it does
 
 - Rows of app tiles (Streaming, Gaming, Other). Arrow keys and the Magic Remote pointer both work.
 - A tile can open an app or HDMI input, call a Home Assistant webhook, or both.
 - Clock, weather, calendar, bin day and "now playing" (Yamaha MusicCast) tiles. They're all plugins, so delete the folder if you don't want one.
-- Opens when the TV turns on.
+- Opens when the TV turns on, and is kept loaded in standby so switching on is quick (rooted TVs).
 - Dims when idle and nudges the screen a pixel or two now and then, to be kind to the OLED.
 - **Rooted TVs only:** edit everything from your phone (scan a QR code on the TV), use the TV's real app icons, and take over the Home button.
 
@@ -43,6 +43,7 @@ ares-launch  --device tv net.local.tvhome
 ```
 
 For a leaner install without the diagnostics, run `web-osome/tools/lean/build.sh` instead of `ares-package` (more in [the guide](docs/GUIDE.md#3-install-on-the-tv)).
+Ready-made `.ipk` files (normal and lean) are on the [Releases](https://github.com/geekyboi/web-OSome/releases) page.
 
 ### Or install from the Homebrew Channel (rooted TVs)
 
@@ -62,12 +63,8 @@ Still set up by hand, as before: the Home Assistant automation, the Home button
 (LG Input Hook, see [the guide](docs/GUIDE.md#5-the-home-button-needs-root)) and the
 `tools/perf` logger.
 
-The repository is rebuilt by the release workflow on every `v*` tag, pointing at that
-release's packages. It needs **Settings → Pages → Source: GitHub Actions** set once on
-the GitHub repo.
-
-Heads up: Developer Mode has a time limit, The TV removes the app when it does. You need to Renew it
-in the Developer Mode app if you're TV is not rooted
+Heads up: Developer Mode has a time limit, and the TV removes the app when it runs out. If
+your TV isn't rooted, renew it in the Developer Mode app.
 
 ## Set it up
 
@@ -79,9 +76,8 @@ in the Developer Mode app if you're TV is not rooted
 Passwords, your Home Assistant token, calendar links and so on are entered in the phone
 editor and saved **on the TV**, so none of it ends up in this repo.
 
-There's a lot more detail (the Home button, calendars, bins, backgrounds...) in
-[docs/GUIDE.md](docs/GUIDE.md), and a diagram of how it all fits together in
-[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+There's a lot more detail (the Home button, calendars, bins, backgrounds, measuring RAM
+and CPU...) in [docs/GUIDE.md](docs/GUIDE.md).
 
 ## Plugins
 
@@ -97,21 +93,9 @@ How to write your own: [plugins/README.md](plugins/README.md).
 
 ## Finding your way around
 
-| Where | What |
-|---|---|
-| `index.html` | The page. Lists the scripts in the order they load. |
-| `js/config.js` | Your apps and defaults. Start here. |
-| `js/core/` | The launcher itself, one job per file: `dock.js` (the rows of tiles), `actions.js` (launching and webhooks), `plugins.js`, `glass.js` (background and frosted panels), `main.js` (start-up and the remote)... |
-| `js/settings.js`, `js/settings-sources.js` | The Settings screen on the TV, and where it finds apps to add. |
-| `plugins/` | The tiles around the dock. How to write one: [plugins/README.md](plugins/README.md). There's a tiny example in `example-plugins/hello`. |
-| `service/` | A small Node service that runs on the TV (rooted only): stores the layout and serves the phone editor. `service.js` starts it, `lib/` does the work. |
-| `service/web/` | The phone editor (`editor/` has one file per part of it). |
-| `startup/` | Scripts to open the app at power-on (rooted TVs). |
-| `home-assistant/` | Example automations and an extra-apps list for Home Assistant. |
-
-The browser files are plain scripts that share one scope, so a function in one file can
-call one in another as long as both are loaded (see the order in `index.html`). Every
-function has a one-line comment saying what it does.
+[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) has a diagram of how it fits together, and
+[AGENTS.md](AGENTS.md) has the file map and the rules (written for AI assistants, but it's
+the best short tour for people too).
 
 ## Thanks
 
