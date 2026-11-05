@@ -154,12 +154,18 @@ if (samples.length) {
 if (events.length) {
   heading('Start-up times (seen while you used the TV)');
   var launches = {}, pending = {}, lastOff = null, waitHome = null, powerOn = [], ready = {}, lastUp = -1;
+  // A preloaded wake: LG brings TV Home to the front a second or two before it reports the TV as
+  // on, so it's counted when the "Active" event comes, by how far ahead TV Home was.
+  var frontOff = null, powerOnAhead = [];
   events.forEach(function (e) {
     var up = num(e.uptime);
-    if (up < lastUp || e.kind === 'start') { pending = {}; waitHome = null; }   // a restart: times don't carry over
+    if (up < lastUp || e.kind === 'start') { pending = {}; waitHome = null; frontOff = null; }   // a restart: times don't carry over
     lastUp = up;
     if (e.kind === 'power') {
-      if (OFF.test(e.detail)) { lastOff = up; } else if (e.detail === 'Active' && lastOff !== null) { waitHome = up; lastOff = null; }
+      if (OFF.test(e.detail)) { lastOff = up; frontOff = null; } else if (e.detail === 'Active' && lastOff !== null) {
+        if (frontOff !== null && up - frontOff < 30) { powerOnAhead.push((up - frontOff) * 1000); waitHome = null; } else { waitHome = up; }
+        lastOff = null; frontOff = null;
+      }
     } else if (e.kind === 'life') {
       // launching = it wasn't running (cold), relaunching = it was, in the background (warm)
       if (e.detail === 'launching' || e.detail === 'launch') { pending[e.app] = { up: up, kind: 'cold' }; }
@@ -169,6 +175,7 @@ if (events.length) {
         if (pd && up - pd.up < 60) { (launches[lk] = launches[lk] || []).push((up - pd.up) * 1000); }
         delete pending[e.app];
         if (e.app === APP && waitHome !== null && up - waitHome < 120) { powerOn.push((up - waitHome) * 1000); }
+        if (e.app === APP && lastOff !== null) { frontOff = up; }
         waitHome = null;
       }
     } else if (e.kind === 'mark') {
@@ -183,6 +190,7 @@ if (events.length) {
     if (s) { rows2.push([label, s.n, fmt(s.min), fmt(s.med), fmt(s.avg), fmt(s.p95), fmt(s.max)]); }
   };
   timing('Switch on -> TV Home in front', powerOn);
+  timing('Switch on: TV Home in front before LG says on (ms ahead)', powerOnAhead);
   // TV Home's own marks, in ms from its page starting to load: each part, then the whole screen
   ['bg', 'layout', 'tiles', 'icons', 'ready', 'ready-hidden', 'shown'].concat(Object.keys(ready)).forEach(function (k, i, all) {
     if (all.indexOf(k) !== i || !ready[k] || /^key-/.test(k)) { return; }

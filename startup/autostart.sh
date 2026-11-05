@@ -85,15 +85,22 @@ open_home() {
 }
 
 # After the TV goes to standby, LG's Quick Start+ (qbd) closes TV Home about 1 s later.
-# Load it again hidden once that's done, if the TV is still off.
+# Load it again hidden once that's done, if the TV is still off. LG sometimes closes it a second
+# time a moment later (with the other apps), so check again after 10 s, up to 3 loads in all.
 preload_hidden() {
   sleep 5
-  was_off "$(cat "$STATEF" 2>/dev/null)" || return
-  [ -f /home/root/tvhome-no-preload ] && return
-  $LUNA -n 1 luna://com.webos.applicationManager/running '{}' </dev/null 2>/dev/null | grep -q "\"id\" *: *\"$APP\"" && return
-  log "standby: loading $APP hidden"
-  $LUNA -n 1 luna://com.webos.applicationManager/launch "{\"id\":\"$APP\",\"preload\":\"full\"}" </dev/null >/dev/null 2>&1 ||
-    log "hidden load failed"
+  n=0
+  while :; do
+    was_off "$(cat "$STATEF" 2>/dev/null)" || return
+    [ -f /home/root/tvhome-no-preload ] && return
+    $LUNA -n 1 luna://com.webos.applicationManager/running '{}' </dev/null 2>/dev/null | grep -q "\"id\" *: *\"$APP\"" && return
+    if [ $n -ge 3 ]; then log "standby: $APP closed again, giving up"; return; fi
+    n=$((n+1))
+    log "standby: loading $APP hidden (try $n)"
+    $LUNA -n 1 luna://com.webos.applicationManager/launch "{\"id\":\"$APP\",\"preload\":\"full\"}" </dev/null >/dev/null 2>&1 ||
+      log "hidden load failed"
+    sleep 10
+  done
 }
 
 foreground() {
