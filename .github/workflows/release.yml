@@ -21,6 +21,8 @@ jobs:
         run: |
           set -e
           V=$(node -p "require('./appinfo.json').version")
+          # the tag must match appinfo.json, or the packages (and the Homebrew Channel) keep the old version
+          [ "v$V" = "$GITHUB_REF_NAME" ] || { echo "Tag $GITHUB_REF_NAME doesn't match appinfo.json version $V"; exit 1; }
           mkdir -p ../full/web-osome ../dist
           git archive HEAD | tar -x -C ../full/web-osome
           (cd ../full && ares-package -o out web-osome web-osome/service)
