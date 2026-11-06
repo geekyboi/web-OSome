@@ -15,7 +15,7 @@
      getPlugins  (sub)      { plugins: [{ id, name, description, version, order, rev, tile, editor, service }] }
      plugin      (sub)      { id, topic }   a plugin's data, e.g. the calendar's events (its service.js: api.topic)
      pluginCall             { id, method, params }   a one-off request to a plugin (its service.js: api.method)
-     activity    (sub)      { cause }   a volume or mute key was pressed (the system UI takes those keys, so the app never sees them)
+     activity    (sub)      { cause }   a volume or mute key was pressed, or LG's screen saver ended (the system takes those keys, so the app never sees them)
      busy                   { uptime, cpu }   seconds since power-on, and how busy the whole TV is (%)
      perfMark               { name, ms }   TV Home's start-up time, logged for tools/perf if its logger is installed   (diag)
 

@@ -401,7 +401,7 @@ It shows the weather now plus the next hour, and together with the settings butt
 ## OLED care
 
 - **Pixel shift:** the whole home screen moves together by at most 2 pixels, one step every 5 minutes, gliding over a minute, so you can't see it move.
-- **Idle dim** (Settings → Home screen → Dim the screen after): a dark layer fades over everything, so every part dims by the same amount. Any key press wakes it; that press only wakes it, so OK never opens an app you couldn't see.
+- **Idle dim** (Settings → Home screen → Dim the screen after): a dark layer fades over everything, so every part dims by the same amount. Any key press wakes it; that press only wakes it, so OK never opens an app you couldn't see. Clearing LG's own screen saver undims it too (rooted TVs, with the service).
 
 ## 10. Background layout
 
