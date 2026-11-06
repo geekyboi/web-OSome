@@ -185,8 +185,9 @@ This is the fiddliest part: read it before touching `startup/` or the start-up c
   re-checks every 10 s, up to 3 loads. `touch /home/root/tvhome-no-preload` turns it off.
 - **Last app:** at standby LG saves the app in front to
   `/var/luna/preferences/last_foreground_app_id.json` and starts it at the next switch-on,
-  ~2 s before power reports Active (closing that app doesn't help: LG cold-launches it). The
-  watcher rewrites the file to TV Home (`STANDBY_LAST_APP`), leaving HDMI and AirPlay alone.
+  ~2 s before power reports Active. It also resumes any app still running. So the watcher
+  (`STANDBY_LAST_APP`) closes apps LG kept running and rewrites the file to TV Home; either
+  alone still flashes Netflix. HDMI and AirPlay are left alone.
   `bootManager/getBootStatus` `firstAppId` shows what LG launched.
 - **First two minutes after a full start** the TV is flat out with LG's own services.
   `calm-boot.sh` runs a fixed list of them at low priority until 120 s after power-on (never

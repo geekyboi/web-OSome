@@ -245,7 +245,7 @@ LG's *Quick Start+* closes TV Home every time the TV goes into standby, so switc
 start it from scratch (2 to 5 seconds, with the TV flat out). So 5 seconds into standby the
 watcher loads TV Home again, hidden, and switching on brings it up in about 0.4 seconds.
 If LG closes it again a moment later, the watcher loads it again (up to 3 times).
-At standby it also makes TV Home the "last app" LG reopens at switch-on, so Netflix (or
+At standby it also closes apps LG keeps running and makes TV Home the "last app" LG reopens at switch-on, so Netflix (or
 whatever was on) doesn't flash up first. HDMI inputs and AirPlay are kept. Turn that off
 with `STANDBY_LAST_APP=0`.
 It stays in memory during standby (about 55 MB). Turn it off with `STANDBY_PRELOAD=0`, or

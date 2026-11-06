@@ -22,8 +22,9 @@ STANDBY_PRELOAD=1  # 1 = when the TV goes to standby, load TV Home again hidden 
                    # LG's Quick Start+ has closed it, so switching on is a quick relaunch (~0.4 s)
                    # rather than a fresh start (~2-5 s). 0 = off. Also off while
                    # /home/root/tvhome-no-preload exists.
-STANDBY_LAST_APP=1 # 1 = at standby, make TV Home the "last app" LG reopens at the next switch-on (instead
-                   # of e.g. Netflix, which LG starts before the screen is even on). 0 = off.
+STANDBY_LAST_APP=1 # 1 = at standby, close the apps LG keeps running and make TV Home the "last app"
+                   # LG reopens at the next switch-on (instead of e.g. Netflix, which LG starts
+                   # before the screen is even on). 0 = off.
 # (LG's background services run at low priority just after a full start: see calm-boot.sh.)
 
 LOG=/tmp/tvhome-autostart.log      # cleared when the TV restarts
@@ -116,12 +117,28 @@ preload_hidden() {
   done
 }
 
+# Apps LG keeps running through standby get put back on screen at the next switch-on, before
+# TV Home. Close them (not TV Home, LG's own apps, inputs or AirPlay).
+close_resumable() {
+  for id in $($LUNA -n 1 luna://com.webos.applicationManager/running '{}' </dev/null 2>/dev/null |
+              sed 's/"id" *: *"/\n@/g' | sed -n 's/^@\([^"]*\)".*/\1/p'); do
+    case "$id" in
+      "$APP"|com.webos.*|com.lge.*|com.palm.*|airplay) ;;
+      *) log "standby: closing $id so it isn't resumed on switch-on"
+         $LUNA -n 1 luna://com.webos.applicationManager/closeByAppId "{\"id\":\"$id\"}" </dev/null >/dev/null 2>&1 ||
+           log "close $id failed" ;;
+    esac
+  done
+}
+
 # At standby LG saves the app in front to last_foreground_app_id.json, and at the next switch-on
 # starts it (as "Last App") about 2 s before the screen is on. Point it at TV Home instead, so
 # the switch-on is a quick relaunch of the hidden preload. Inputs and AirPlay are left alone.
-# Checked for a minute, in case LG writes it a little later.
+# Checked for a minute, in case LG writes it a little later. Both are needed: LG resumes an
+# app still running, and cold-launches the one the file names.
 LASTF=/var/luna/preferences/last_foreground_app_id.json
 keep_last_app() {
+  close_resumable
   i=0
   while [ $i -lt 12 ]; do
     was_off "$(cat "$STATEF" 2>/dev/null)" || return
