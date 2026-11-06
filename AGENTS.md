@@ -232,6 +232,10 @@ This is the fiddliest part: read it before touching `startup/` or the start-up c
   photos. Secrets belong in the phone editor, which saves them on the TV. `.gitignore`
   already covers `*.local.js`, `.env`, `*.ipk` and `launchpoints.json`. Use made-up
   values like `192.168.1.50` in examples.
+- **Nothing that belongs to LG or anyone else.** No files copied off the TV (LG's code,
+  fonts, icons, wallpapers), no app logos (tiles use text glyphs; real icons are read from
+  the TV at runtime) and no pictures without a free licence. Credit bundled photos in the
+  README. Don't call the app LG's or webOS's, or use their logos.
 - **LG Home must stay reachable.** The `com.webos.app.home` tile can't be removed, so
   people always have a way back to LG's home screen. Don't weaken that.
 - **Root-only features must fail gracefully.** The phone editor, the TV's real app icons,

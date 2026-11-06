@@ -17,8 +17,15 @@ var LG_HOME = 'com.webos.app.home';
 // Is this the LG Home tile (which can't be removed)?
 function isLocked(t) { return !!(t && t.app === LG_HOME); }
 // Make sure some tile opens LG Home; if none does, add one to the last section. Returns list.
+/* Files that were removed (licensing): layouts saved before then still point at them.
+   The old Apple TV logo becomes a "tv" text tile, the old background the new one. */
+var OLD_ICON = 'assets/icons/Apple_TV.png', OLD_BG = 'assets/background2.jpg', NEW_BG = 'assets/background3.jpg';
+function dropOldIcon(t) {
+  if (t && t.icon === OLD_ICON) { delete t.icon; delete t.colorIcon; t.glyph = 'tv'; t.fs = 46; }
+}
 function ensureHome(list) {
   if (!list || !list.length) { return list; }
+  list.forEach(function (c) { (c.tiles || []).forEach(dropOldIcon); });
   for (var i = 0; i < list.length; i++) {
     var tiles = list[i].tiles || [];
     for (var j = 0; j < tiles.length; j++) { if (isLocked(tiles[j])) { return list; } }
@@ -34,7 +41,7 @@ function applySettings(st) {
   if (!st) { return; }
   if (st.maxVisible != null) { CFG.maxVisible = st.maxVisible; }
   if (st.idleDimMinutes != null) { CFG.idleDimMinutes = st.idleDimMinutes; }
-  if (st.background !== undefined) { CFG.background = st.background; }
+  if (st.background !== undefined) { CFG.background = st.background === OLD_BG ? NEW_BG : st.background; }
   if (typeof st.useTvIcons === 'boolean') { CFG.useTvIcons = st.useTvIcons; }
   if (st.haUrl) { HA.url = st.haUrl; }
   if (st.haAppsList) { HA.appsList = st.haAppsList; }
