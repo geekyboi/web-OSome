@@ -1,6 +1,6 @@
 {
   "name": "net.local.tvhome.service",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "TV Home: web editor and layout storage",
   "main": "service.js"
 }

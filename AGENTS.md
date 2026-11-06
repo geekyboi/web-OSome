@@ -163,7 +163,8 @@ project ([MusicCast_WebOS](https://github.com/geekyboi/MusicCast_WebOS)), not th
 
 ## Releases
 
-Bump `version` in `appinfo.json`, then push a tag like `v1.0.1`. The release workflow makes
+Bump `version` in `appinfo.json` (and `service/package.json`), then push a matching tag like `v1.0.1`;
+the workflow fails if they differ. The release workflow makes
 a GitHub release with the normal `.ipk`, the lean `-lean.ipk` and a zip of the scripts and
 config, then rebuilds the Homebrew Channel repo on GitHub Pages (`tools/hbrepo/make-repo.js`:
 lean at `/apps.json`, normal at `/full/apps.json`). Force-pushing a tag that already has a
