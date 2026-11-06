@@ -20,7 +20,10 @@ function haGet(base, token, pth, cb, maxBytes) {
     res.on('end', function () {
       var text = Buffer.concat(chunks).toString('utf8'), msg = '';
       try { msg = (JSON.parse(text) || {}).message || ''; } catch (e0) { msg = text.slice(0, 200); }
-      if (res.statusCode === 401) { end(new Error('Home Assistant refused the token. Make a new long-lived access token and paste it again.')); return; }
+      if (res.statusCode === 401 || res.statusCode === 403) {
+        var ae = new Error('Home Assistant refused the token. Make a new long-lived access token and paste it again.');
+        ae.auth = true; end(ae); return;            // the caller stops retrying (each try is a failed login in HA)
+      }
       if (res.statusCode === 404) { end(new Error('Home Assistant doesn\u2019t know that calendar' + (msg ? ' (' + msg + ')' : '') + '.')); return; }
       // say exactly what Home Assistant said, so problems can be traced
       if (res.statusCode !== 200) { end(new Error('Home Assistant answered ' + res.statusCode + (msg ? ': ' + msg : ''))); return; }
@@ -92,7 +95,7 @@ function collections(base, token, cals, cb) {
   var start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   var end = new Date(start.getTime() + 56 * 86400000);          // 8 weeks (some bins go monthly in winter)
   var range = '?start=' + encodeURIComponent(start.toISOString()) + '&end=' + encodeURIComponent(end.toISOString());
-  var byDay = {}, errors = [], empty = [], far = [], left = cals.length, okCount = 0;
+  var byDay = {}, errors = [], empty = [], far = [], left = cals.length, okCount = 0, authErr = null;
   var today = ymd(now);
   function add(day, n) {
     var list = byDay[day] = byDay[day] || [];
@@ -102,7 +105,7 @@ function collections(base, token, cals, cb) {
     if (/^sensor\./.test(c.id)) {
       // a sensor with every bin's next date: each bin is named by the sensor
       haGet(base, token, '/api/states/' + c.id, function (err, st) {
-        if (err) { errors.push({ id: c.id, error: err.message }); finish(); return; }
+        if (err) { if (err.auth) { authErr = err; } errors.push({ id: c.id, error: err.message }); finish(); return; }
         var b = sensorBins(st);
         if (!b) { errors.push({ id: c.id, error: 'This sensor doesn\u2019t hold bin dates (expected e.g. {"Green Bin": "30/10/2026"}).' }); finish(); return; }
         okCount++;
@@ -115,7 +118,7 @@ function collections(base, token, cals, cb) {
       return;
     }
     haGet(base, token, '/api/calendars/' + c.id + range, function (err, events) {
-      if (err) { errors.push({ id: c.id, error: err.message }); finish(); return; }
+      if (err) { if (err.auth) { authErr = err; } errors.push({ id: c.id, error: err.message }); finish(); return; }
       okCount++;
       var got = 0;
       (Array.isArray(events) ? events : []).forEach(function (e) {
@@ -146,6 +149,7 @@ function collections(base, token, cals, cb) {
   }
   function finish() {
     if (--left) { return; }
+    if (authErr) { cb(authErr); return; }       // a refused token: say so once, keep nothing
     if (!okCount) { cb(new Error(errors.map(function (x) { return x.id + ': ' + x.error; }).join(' \u00b7 '))); return; }
     var order = cals.map(function (x) { return x.name; });
     cb(null, Object.keys(byDay).sort().map(function (d) {

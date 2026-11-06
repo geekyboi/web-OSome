@@ -250,6 +250,9 @@ This is the fiddliest part: read it before touching `startup/` or the start-up c
   the app reads the http.server folder listing, then `plugins/index.json`.
 - **Webhook results are blind.** The TV can't read Home Assistant's status codes (no CORS),
   so a wrong webhook id still says "Sent".
+- **Stop on a refused token.** Every 401 from Home Assistant raises an "invalid
+  authentication" alert in HA (and can ban the TV's IP, which breaks webhooks too). A plugin
+  that polls HA must stop after a 401 until the token or address changes, like the bins do.
 
 ## Changing docs
 

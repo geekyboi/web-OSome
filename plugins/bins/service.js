@@ -4,6 +4,7 @@
    never sent to the TV app or the editor. Checked every 30 minutes.
    Settings: { calendars: [{ id, name }], from, until, colours: { bin name: '#rrggbb' } }. Plain ES5. */
 'use strict';
+var crypto = require('crypto');
 var bins = require('./homeassistant.js');
 
 function int(v, lo, hi, dflt) { v = parseInt(v, 10); return isNaN(v) ? dflt : Math.max(lo, Math.min(hi, v)); }
@@ -34,21 +35,28 @@ module.exports = {
   },
 
   start: function (api) {
-    var bn = { key: '', list: [], error: null, errors: [], at: 0 };
+    var bn = { key: '', list: [], error: null, errors: [], at: 0, refused: '' };
     function binCals() { return api.settings().calendars || []; }
     function binsPayload() {
       var s = api.settings();
       return { returnValue: true, configured: !!(binCals().length && api.haToken()), next: bn.list.slice(0, 3), error: bn.error, errors: bn.errors || [], at: bn.at,
         from: s.from != null ? s.from : 16, until: s.until != null ? s.until : 9, colours: s.colours || {} };
     }
-    function binsKey() { var tok = api.haToken(); return JSON.stringify(binCals()) + '|' + api.haBase() + '|' + (tok ? tok.length : 0); }
+    // a hash of the token, so pasting a new one (same length) counts as a change
+    function binsKey() { var tok = api.haToken(); return JSON.stringify(binCals()) + '|' + api.haBase() + '|' + (tok ? crypto.createHash('sha1').update(tok).digest('hex') : ''); }
     function refreshBins() {
       var tok = api.haToken(), key = binsKey();
+      // Home Assistant refused this token: don't ask again until the token or address changes,
+      // or HA shows an "invalid authentication" alert every 30 minutes (and may ban the TV's IP).
+      if (bn.refused && bn.refused === key) { return; }
       bn.key = key;
       if (!binCals().length || !tok) { bn.list = []; bn.error = null; bn.errors = []; api.publish('bins'); return; }
       bins.collections(api.haBase(), tok, binCals(), function (err, list, errors) {
         if (bn.key !== key) { return; }
-        if (err) { bn.error = err.message; api.log(err.message); }      // keep the last list we had
+        if (err) {
+          bn.error = err.message; api.log(err.message);                 // keep the last list we had
+          if (err.auth) { bn.refused = key; bn.list = []; }
+        }
         else {
           bn.list = list; bn.error = null; bn.errors = errors || []; bn.at = Date.now();
           bn.errors.forEach(function (x) { api.log(x.id, x.error); });
