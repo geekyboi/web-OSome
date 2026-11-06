@@ -22,6 +22,8 @@ STANDBY_PRELOAD=1  # 1 = when the TV goes to standby, load TV Home again hidden 
                    # LG's Quick Start+ has closed it, so switching on is a quick relaunch (~0.4 s)
                    # rather than a fresh start (~2-5 s). 0 = off. Also off while
                    # /home/root/tvhome-no-preload exists.
+STANDBY_CLOSE=1    # 1 = at standby, also close the apps LG keeps running (e.g. Netflix), so the TV
+                   # can't resume them on screen before TV Home at the next switch-on. 0 = off.
 # (LG's background services run at low priority just after a full start: see calm-boot.sh.)
 
 LOG=/tmp/tvhome-autostart.log      # cleared when the TV restarts
@@ -45,14 +47,21 @@ open_home() {
   # On a wake, Start-up "Last source" usually opens TV Home itself: give it WAKE_WAIT seconds,
   # and only step in if something else is in front. Opening it as well strands LG's loading cover.
   if [ "$1" = wake ] && [ "$WAKE_WAIT" -gt 0 ]; then
-    sleep "$WAKE_WAIT"
-    [ "$(cat "$STATEF" 2>/dev/null)" = Active ] || return   # switched off again
-    fg=$(foreground)
-    case "$fg" in
-      "$APP") log "$APP in front after ${WAKE_WAIT}s, nothing to do"; return ;;
-      com.webos.app.hdmi*|airplay) log "woke on $fg, leaving it"; return ;;
-    esac
-    log "${fg:-nothing} in front after ${WAKE_WAIT}s"
+    # Check twice a second rather than waiting the whole time: if an app LG resumed (e.g.
+    # Netflix) is already in front, Last source isn't opening TV Home, so step in at once.
+    w=0
+    while :; do
+      [ "$(cat "$STATEF" 2>/dev/null)" = Active ] || return   # switched off again
+      fg=$(foreground)
+      case "$fg" in
+        "$APP") log "$APP in front after ${w} checks, nothing to do"; return ;;
+        com.webos.app.hdmi*|airplay) log "woke on $fg, leaving it"; return ;;
+        ""|com.webos.*|com.lge.*) ;;   # LG's cover or home: Last source may still be opening TV Home
+        *) log "$fg resumed, opening $APP now"; break ;;
+      esac
+      [ $w -ge $((WAKE_WAIT * 2)) ] && { log "${fg:-nothing} in front after ${WAKE_WAIT}s"; break; }
+      sleep 0.5 2>/dev/null || sleep 1; w=$((w+1))
+    done
   fi
   # at a full start LG usually opens TV Home itself before this script runs: opening it again costs
   # a relaunch just as the TV is at its busiest
@@ -89,6 +98,7 @@ open_home() {
 # time a moment later (with the other apps), so check again after 10 s, up to 3 loads in all.
 preload_hidden() {
   sleep 5
+  if [ "$STANDBY_CLOSE" = 1 ] && was_off "$(cat "$STATEF" 2>/dev/null)"; then close_resumable; fi
   n=0
   while :; do
     was_off "$(cat "$STATEF" 2>/dev/null)" || return
@@ -100,6 +110,36 @@ preload_hidden() {
     $LUNA -n 1 luna://com.webos.applicationManager/launch "{\"id\":\"$APP\",\"preload\":\"full\"}" </dev/null >/dev/null 2>&1 ||
       log "hidden load failed"
     sleep 10
+  done
+}
+
+# Apps LG keeps running through standby get put back on screen at the next switch-on, before
+# TV Home. Close them (not TV Home, LG's own apps, inputs or AirPlay).
+close_resumable() {
+  for id in $($LUNA -n 1 luna://com.webos.applicationManager/running '{}' </dev/null 2>/dev/null |
+              sed 's/"id" *: *"/\n@/g' | sed -n 's/^@\([^"]*\)".*/\1/p'); do
+    case "$id" in
+      "$APP"|com.webos.*|com.lge.*|com.palm.*|airplay) ;;
+      *) log "standby: closing $id so it isn't resumed on switch-on"
+         $LUNA -n 1 luna://com.webos.applicationManager/closeByAppId "{\"id\":\"$id\"}" </dev/null >/dev/null 2>&1 ||
+           log "close $id failed" ;;
+    esac
+  done
+}
+
+# Copies of this script left over from an earlier start (e.g. the loop's subshell outliving a
+# killed watcher) would act on power changes too. Stop any that aren't this one or its children.
+stop_leftovers() {
+  for d in /proc/[0-9]*; do
+    p=${d#/proc/}
+    [ "$p" = $$ ] && continue
+    case "$(tr '\0' '\n' <"$d/cmdline" 2>/dev/null | sed -n 2p)" in   # "sh .../startup/autostart.sh"
+      */startup/autostart.sh|startup/autostart.sh) ;;
+      *) continue ;;
+    esac
+    pp=$(sed 's/.*) . \([0-9]*\).*/\1/' "$d/stat" 2>/dev/null)
+    [ "$pp" = $$ ] && continue
+    log "stopping leftover watcher (pid $p)"; kill "$p" 2>/dev/null
   done
 }
 
@@ -122,6 +162,8 @@ was_off() {
     *) return 1 ;;
   esac
 }
+
+stop_leftovers
 
 # usually already done by TV Home's service, which starts earlier
 sh "$(dirname "$0")/calm-boot.sh" &

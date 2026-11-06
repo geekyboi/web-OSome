@@ -231,8 +231,8 @@ background, then exits immediately. That matters: the Homebrew Channel only clea
 crash-protection flag once every start-up script has finished, so a script that kept
 running would put the next start in failsafe mode. The watcher listens to the TV's
 power state, and when the TV comes back on from standby it opens TV Home (straight
-away after a full start; after a wake it first gives *Last source* 3 seconds to do it, see
-`WAKE_WAIT`). AirPlay to a TV that's off wakes it on TV Home (*Last source* opens TV Home over AirPlay and
+away after a full start; after a wake it first gives *Last source* up to 3 seconds to do it, see
+`WAKE_WAIT`, unless another app such as Netflix is already in front). AirPlay to a TV that's off wakes it on TV Home (*Last source* opens TV Home over AirPlay and
 the stream drops), so AirPlay again once it's on. Don't call `closeAllSystemUI` to clear LG's white loading cover: on the
 OLED55A2 it made the TV restart and switch off. For the next 10 seconds it checks what's on screen: if the TV's own start-up
 puts LG's home screen or Live TV over TV Home, it opens TV Home again, and the same for an
@@ -245,6 +245,8 @@ LG's *Quick Start+* closes TV Home every time the TV goes into standby, so switc
 start it from scratch (2 to 5 seconds, with the TV flat out). So 5 seconds into standby the
 watcher loads TV Home again, hidden, and switching on brings it up in about 0.4 seconds.
 If LG closes it again a moment later, the watcher loads it again (up to 3 times).
+It also closes the apps LG keeps running in standby (e.g. Netflix), so switching on doesn't
+flash the last app before TV Home. Turn that off with `STANDBY_CLOSE=0`.
 It stays in memory during standby (about 55 MB). Turn it off with `STANDBY_PRELOAD=0`, or
 straight away with `touch /home/root/tvhome-no-preload`.
 
