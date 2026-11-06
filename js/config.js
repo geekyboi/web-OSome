@@ -48,7 +48,7 @@ window.TVHOME_CONFIG = {
 
   idleDimMinutes: 5,
 
-  background: "assets/background2.jpg",
+  background: "assets/background3.jpg",
 
   homeAssistant: {
     url: "http://homeassistant.local:8123",   // or its IP address, e.g. http://192.168.1.10:8123
@@ -97,8 +97,8 @@ window.TVHOME_CONFIG = {
         },
         { 
           name: "Apple TV",    
-          icon: "assets/icons/Apple_TV.png", 
-          colorIcon: true, 
+          glyph: "tv", 
+          fs: 46, 
           color: "#3b3b43", 
           actions: [ 
             { webhook: "amp_tv" }, 

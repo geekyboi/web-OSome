@@ -103,10 +103,14 @@ App IDs and the Homebrew Channel tricks for the app list come from
 [webos-launcher](https://github.com/partridgeworks/webos-launcher) (MIT), and the icon
 trick from [Hearth](https://github.com/rudra-avatar/Hearth). The phone editor borrows code
 from [a gist by Informatic](https://gist.github.com/Informatic/319bcaf94436b9136904473ca4f4ec9c).
+The background is Moraine Lake, [photo by Amir Hanna on Unsplash](https://unsplash.com/photos/fpOgweSN2e4).
 
 ## Licence
 
 MIT, see [LICENSE](LICENSE).
+
+Not made, endorsed or supported by LG Electronics. LG and webOS are trademarks of LG
+Electronics; other app names belong to their owners.
 
 ---
 

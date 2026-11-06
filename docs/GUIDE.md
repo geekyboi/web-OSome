@@ -62,8 +62,8 @@ Everything you change lives in **`js/config.js`**, with comments. In short:
   white block); `colorIcon: true` keeps an image's own colours.
 - `background`: one full-page picture, ideally 1920x1080 (JPG or PNG), shown behind
   everything. Keep the left side dark so the headings stay readable.
-  `background: null` gives plain black. The bundled `assets/background2.jpg` is
-  the mountain lake; replace the file (or point this at your own) to change it.
+  `background: null` gives plain black. The bundled `assets/background3.jpg` is
+  Moraine Lake ([photo by Amir Hanna on Unsplash](https://unsplash.com/photos/fpOgweSN2e4)); replace the file (or point this at your own) to change it.
 - **Text on light pictures.** TV Home measures how light the background is behind
   the greeting, the sections and the clock, and uses dark text (and light glass)
   wherever it's light. In the web editor, Settings → Text can force light or dark
