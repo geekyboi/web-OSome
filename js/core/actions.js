@@ -40,6 +40,8 @@ function sendWebhook(a, cb) {
 }
 
 // The dot in the status capsule: can the TV reach Home Assistant at all?
+// Asks for /manifest.json, which HA serves without a login. /api/ needs a token, so every
+// check (once a minute) showed up in HA as a failed login from the TV.
 function checkHA() {
   var dot = $('hadot');
   if (!HA.url) { dot.className = ''; dot.parentNode.classList.remove('bad'); return; }
@@ -47,7 +49,7 @@ function checkHA() {
   var timer = setTimeout(function () { if (ctl) { ctl.abort(); } }, 3000);
   var opts = { method: 'GET', mode: 'no-cors', cache: 'no-store' };
   if (ctl) { opts.signal = ctl.signal; }
-  fetch(String(HA.url).replace(/\/+$/, '') + '/api/', opts).then(
+  fetch(String(HA.url).replace(/\/+$/, '') + '/manifest.json', opts).then(
     function () { clearTimeout(timer); dot.className = 'ok'; dot.parentNode.classList.remove('bad'); $('status').title = 'Home Assistant reachable'; layoutRegion('status'); },
     function () { clearTimeout(timer); dot.className = 'bad'; dot.parentNode.classList.add('bad'); $('status').title = 'Home Assistant not reachable'; layoutRegion('status'); }
   );
