@@ -138,9 +138,9 @@ function follow() {
   lunaSub(SVC + 'getPlugins', {}, function (r) {
     if (r && r.returnValue !== false && r.plugins) { setPlugins(r.plugins); }
   });
-  // volume / mute keys: the system UI takes them, so keydown never sees them
+  // volume / mute keys, and the key that ends LG's screen saver: the system takes them, so keydown never sees them
   lunaSub(SVC + 'activity', {}, function (r) {
-    if (r && r.cause) { wake(); }
+    if (r && r.cause && wake() && r.cause === 'screen') { sysWokeAt = Date.now(); }
   });
   svc.following = true;
   pluginsServiceReady();

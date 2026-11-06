@@ -36,14 +36,17 @@ function tickClock() {
 
 var idleTimer = null;
 // Something happened (a key, the pointer): undim the screen and restart the idle timer.
+// Returns true if the screen was dimmed, so the caller can swallow the press that woke it.
 function wake() {
   var stage = $('stage');
-  if (stage.classList.contains('dim')) { stage.classList.remove('dim'); }
+  var wasDim = stage.classList.contains('dim');
+  if (wasDim) { stage.classList.remove('dim'); }
   clearTimeout(idleTimer);
   var mins = CFG.idleDimMinutes;
   if (mins > 0) {
     idleTimer = setTimeout(function () { stage.classList.add('dim'); }, mins * 60 * 1000);
   }
+  return wasDim;
 }
 
 // On the TV the viewport is 1920x1080 so this does nothing; it lets a desktop browser preview fit.
@@ -73,9 +76,14 @@ document.addEventListener('keydown', function (e) {
     requestAnimationFrame(function () { moveShown = true; });
   }
 }, true);
+// The press that wakes the dimmed screen only wakes it: OK mustn't open the app you can't see yet.
+// Held down, its repeats are swallowed too; the next fresh press works as normal.
+var wakeKey = -1, sysWokeAt = 0;
 document.addEventListener('keydown', function (e) {
-  wake();
   var k = e.keyCode;
+  if (wake() || Date.now() - sysWokeAt < 500) { sysWokeAt = 0; wakeKey = k; e.preventDefault(); return; }
+  if (e.repeat && k === wakeKey) { e.preventDefault(); return; }
+  wakeKey = -1;
   if (settingsOpen()) { window.TVHOME_SETTINGS.onKey(e); return; }
   if (k === KEY.RED) { e.preventDefault(); openSettings(); return; }
   if (onGear) {
@@ -113,7 +121,14 @@ function onHover(node, fn) {
 document.addEventListener('keydown', function () { lastKey = Date.now(); }, true);
 document.addEventListener('mousemove', function () { lastMove = Date.now(); }, true);
 document.addEventListener('mousemove', wake);
-document.addEventListener('click', wake);
+// A pointer click on the dimmed screen only wakes it too (capture, so it never reaches the tile).
+document.addEventListener('click', function (e) {
+  if (wake()) { e.preventDefault(); e.stopPropagation(); }
+}, true);
+// LG's screensaver opens over TV Home (blur) and the press that closes it doesn't always reach
+// the page, so undim when focus comes back. If that press does follow, it's swallowed as a wake
+// (as after the service's 'screen' activity, in service-link.js).
+window.addEventListener('focus', function () { if (wake()) { sysWokeAt = Date.now(); } });
 
 var returnedAt = 0;
 // Brought back to the front (Home pressed again, or returning from an app). toStart: Home was

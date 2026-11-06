@@ -248,6 +248,12 @@ This is the fiddliest part: read it before touching `startup/` or the start-up c
   Channel into failsafe mode at the next boot.
 - **The TV can't list folders.** The plugin list comes from the service. Without it,
   the app reads the http.server folder listing, then `plugins/index.json`.
+- **The press that wakes the dimmed screen does nothing else.** `wake()` returns true when it
+  undimmed, and the key and click handlers in `js/core/main.js` swallow that press (and its
+  repeats), so OK on a dark screen can't open an app. Keep any new input path doing the same.
+  LG's screen saver eats the key that clears it, so TV Home also wakes on window `focus`
+  (the screen saver blurs the page) and on the service's `activity` when the power state goes
+  from `Screen Saver`/`Screen Off` back to `Active`. Both swallow a press that follows within 0.5 s.
 - **Webhook results are blind.** The TV can't read Home Assistant's status codes (no CORS),
   so a wrong webhook id still says "Sent".
 - **Don't make HA log failed logins.** Every 401 from Home Assistant raises an "invalid

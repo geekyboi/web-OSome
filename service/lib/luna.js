@@ -41,8 +41,19 @@ function startLuna() {
   // Keep running: without an activity webOS stops idle services after a few seconds.
   try { service.activityManager.create('keepAlive', function () {}); } catch (e) { log('keepAlive failed', e.message); }
   try {
+    var lastPower = '';
     service.subscribe('luna://com.webos.service.tvpower/power/getPowerState', { subscribe: true })
-      .on('response', function (m) { var st = m.payload && m.payload.state; if (st) { power.powerChanged(st); } });
+      .on('response', function (m) {
+        var st = m.payload && m.payload.state;
+        if (!st) { return; }
+        // The key that clears LG's screen saver (or turns the screen back on) goes to the system,
+        // not the TV app, so pass it on (activity) to undim TV Home too.
+        if (/^Screen (Saver|Off)$/.test(lastPower) && st === 'Active') {
+          notify(activitySubs, { returnValue: true, cause: 'screen' });
+        }
+        lastPower = st;
+        power.powerChanged(st);
+      });
   } catch (e) { log('power state not available', e.message); }
   try {
     var lastFront = '';
