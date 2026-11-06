@@ -175,12 +175,20 @@ Source: GitHub Actions** set once on the GitHub repo.
 This is the fiddliest part: read it before touching `startup/` or the start-up code in `main.js`.
 
 - With LG's *Quick Start+*, switching on is usually a wake from standby, not a boot.
-  `autostart.sh` watches the power state. On a wake it gives *Last source* `WAKE_WAIT`
-  seconds to open TV Home itself before stepping in (opening it twice strands LG's loading
-  cover). At a full start it doesn't launch again if TV Home is already in front.
+  `autostart.sh` watches the power state. On a wake it gives *Last source* up to `WAKE_WAIT`
+  seconds to open TV Home itself (opening it twice strands LG's loading cover), but steps in
+  at once if a resumed app such as Netflix is in front. At a full start it doesn't launch
+  again if TV Home is already in front. A new watcher stops leftover copies of itself, and one started by hand on a TV that's
+  been up over 10 minutes leaves the screen alone.
 - **Standby preload:** LG closes TV Home on standby, so the watcher loads it again hidden
   (switching on is then ~0.4 s, not 2-5 s). LG sometimes closes it a second time, so it
   re-checks every 10 s, up to 3 loads. `touch /home/root/tvhome-no-preload` turns it off.
+- **Last app:** on a wake LG's cover (`com.webos.app.cpcover`, bootd "Cover App" action) starts
+  the app that was in front before standby (newest in surface-manager's recents) ~1-2 s before
+  power reports Active, so it can show briefly before the watcher steps in. Tried and dropped:
+  closing that app at standby (cold launch behind LG's white cover, looks worse; TV also
+  suspended sooner, before the preload ran) and rewriting
+  `/var/luna/preferences/last_foreground_app_id.json` (the cover doesn't read it).
 - **First two minutes after a full start** the TV is flat out with LG's own services.
   `calm-boot.sh` runs a fixed list of them at low priority until 120 s after power-on (never
   anything that draws, plays, reads the remote or the luna bus). The loading screen stays up

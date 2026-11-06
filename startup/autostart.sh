@@ -45,18 +45,29 @@ open_home() {
   # On a wake, Start-up "Last source" usually opens TV Home itself: give it WAKE_WAIT seconds,
   # and only step in if something else is in front. Opening it as well strands LG's loading cover.
   if [ "$1" = wake ] && [ "$WAKE_WAIT" -gt 0 ]; then
-    sleep "$WAKE_WAIT"
-    [ "$(cat "$STATEF" 2>/dev/null)" = Active ] || return   # switched off again
-    fg=$(foreground)
-    case "$fg" in
-      "$APP") log "$APP in front after ${WAKE_WAIT}s, nothing to do"; return ;;
-      com.webos.app.hdmi*|airplay) log "woke on $fg, leaving it"; return ;;
-    esac
-    log "${fg:-nothing} in front after ${WAKE_WAIT}s"
+    # Check twice a second rather than waiting the whole time: if an app LG resumed (e.g.
+    # Netflix) is already in front, Last source isn't opening TV Home, so step in at once.
+    w=0
+    while :; do
+      [ "$(cat "$STATEF" 2>/dev/null)" = Active ] || return   # switched off again
+      fg=$(foreground)
+      case "$fg" in
+        "$APP") log "$APP in front after ${w} checks, nothing to do"; return ;;
+        com.webos.app.hdmi*|airplay) log "woke on $fg, leaving it"; return ;;
+        ""|com.webos.*|com.lge.*) ;;   # LG's cover or home: Last source may still be opening TV Home
+        *) log "$fg resumed, opening $APP now"; break ;;
+      esac
+      [ $w -ge $((WAKE_WAIT * 2)) ] && { log "${fg:-nothing} in front after ${WAKE_WAIT}s"; break; }
+      sleep 0.5 2>/dev/null || sleep 1; w=$((w+1))
+    done
   fi
   # at a full start LG usually opens TV Home itself before this script runs: opening it again costs
   # a relaunch just as the TV is at its busiest
   if [ "$1" = boot ] && [ "$(foreground)" = "$APP" ]; then log "boot: $APP already in front"; return; fi
+  # watcher restarted by hand (e.g. after an update) while the TV was on: leave the screen alone
+  if [ "$1" = boot ] && [ "$(cut -d. -f1 /proc/uptime 2>/dev/null || echo 0)" -gt 600 ]; then
+    log "started while the TV was on, leaving the screen alone"; return
+  fi
   if [ "$SKIP_IF_HDMI" = 1 ]; then
     fg=$(foreground)
     case "$fg" in
@@ -103,6 +114,22 @@ preload_hidden() {
   done
 }
 
+# Copies of this script left over from an earlier start (e.g. the loop's subshell outliving a
+# killed watcher) would act on power changes too. Stop any that aren't this one or its children.
+stop_leftovers() {
+  for d in /proc/[0-9]*; do
+    p=${d#/proc/}
+    [ "$p" = $$ ] && continue
+    case "$(tr '\0' '\n' 2>/dev/null <"$d/cmdline" | sed -n 2p)" in   # "sh .../startup/autostart.sh"
+      */startup/autostart.sh|startup/autostart.sh) ;;
+      *) continue ;;
+    esac
+    pp=$(sed 's/.*) . \([0-9]*\).*/\1/' "$d/stat" 2>/dev/null)
+    [ "$pp" = $$ ] && continue
+    log "stopping leftover watcher (pid $p)"; kill "$p" 2>/dev/null
+  done
+}
+
 foreground() {
   $LUNA -n 1 luna://com.webos.applicationManager/getForegroundAppInfo '{}' </dev/null 2>/dev/null |
     sed -n 's/.*"appId" *: *"\([^"]*\)".*/\1/p'
@@ -122,6 +149,8 @@ was_off() {
     *) return 1 ;;
   esac
 }
+
+stop_leftovers
 
 # usually already done by TV Home's service, which starts earlier
 sh "$(dirname "$0")/calm-boot.sh" &
