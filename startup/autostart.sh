@@ -22,8 +22,8 @@ STANDBY_PRELOAD=1  # 1 = when the TV goes to standby, load TV Home again hidden 
                    # LG's Quick Start+ has closed it, so switching on is a quick relaunch (~0.4 s)
                    # rather than a fresh start (~2-5 s). 0 = off. Also off while
                    # /home/root/tvhome-no-preload exists.
-STANDBY_CLOSE=1    # 1 = at standby, also close the apps LG keeps running (e.g. Netflix), so the TV
-                   # can't resume them on screen before TV Home at the next switch-on. 0 = off.
+STANDBY_LAST_APP=1 # 1 = at standby, make TV Home the "last app" LG reopens at the next switch-on (instead
+                   # of e.g. Netflix, which LG starts before the screen is even on). 0 = off.
 # (LG's background services run at low priority just after a full start: see calm-boot.sh.)
 
 LOG=/tmp/tvhome-autostart.log      # cleared when the TV restarts
@@ -102,7 +102,6 @@ open_home() {
 # time a moment later (with the other apps), so check again after 10 s, up to 3 loads in all.
 preload_hidden() {
   sleep 5
-  if [ "$STANDBY_CLOSE" = 1 ] && was_off "$(cat "$STATEF" 2>/dev/null)"; then close_resumable; fi
   n=0
   while :; do
     was_off "$(cat "$STATEF" 2>/dev/null)" || return
@@ -117,17 +116,22 @@ preload_hidden() {
   done
 }
 
-# Apps LG keeps running through standby get put back on screen at the next switch-on, before
-# TV Home. Close them (not TV Home, LG's own apps, inputs or AirPlay).
-close_resumable() {
-  for id in $($LUNA -n 1 luna://com.webos.applicationManager/running '{}' </dev/null 2>/dev/null |
-              sed 's/"id" *: *"/\n@/g' | sed -n 's/^@\([^"]*\)".*/\1/p'); do
+# At standby LG saves the app in front to last_foreground_app_id.json, and at the next switch-on
+# starts it (as "Last App") about 2 s before the screen is on. Point it at TV Home instead, so
+# the switch-on is a quick relaunch of the hidden preload. Inputs and AirPlay are left alone.
+# Checked for a minute, in case LG writes it a little later.
+LASTF=/var/luna/preferences/last_foreground_app_id.json
+keep_last_app() {
+  i=0
+  while [ $i -lt 12 ]; do
+    was_off "$(cat "$STATEF" 2>/dev/null)" || return
+    id=$(sed -n 's/.*"appId" *: *"\([^"]*\)".*/\1/p' "$LASTF" 2>/dev/null)
     case "$id" in
-      "$APP"|com.webos.*|com.lge.*|com.palm.*|airplay) ;;
-      *) log "standby: closing $id so it isn't resumed on switch-on"
-         $LUNA -n 1 luna://com.webos.applicationManager/closeByAppId "{\"id\":\"$id\"}" </dev/null >/dev/null 2>&1 ||
-           log "close $id failed" ;;
+      ""|"$APP"|com.webos.app.hdmi*|airplay) ;;
+      *) log "standby: last app was $id, setting it to $APP"
+         printf '{"appId":"%s"}' "$APP" > "$LASTF.tmp" && mv "$LASTF.tmp" "$LASTF" || log "could not set last app" ;;
     esac
+    sleep 5; i=$((i+1))
   done
 }
 
@@ -189,6 +193,9 @@ while true; do
     fi
     if [ "$STANDBY_PRELOAD" = 1 ] && [ -n "$last" ] && was_off "$st" && ! was_off "$last"; then
       preload_hidden &
+    fi
+    if [ "$STANDBY_LAST_APP" = 1 ] && [ -n "$last" ] && was_off "$st" && ! was_off "$last"; then
+      keep_last_app &
     fi
   done
   sleep 5
