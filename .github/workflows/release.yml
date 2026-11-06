@@ -35,8 +35,15 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          # moved a tag that already has a release (git push -f origin <tag>): replace its files
-          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then gh release upload "$GITHUB_REF_NAME" ../dist/* --clobber; exit 0; fi
+          # moved a tag that already has a release (git push -f origin <tag>): replace its files,
+          # and delete any left from the earlier build that this one didn't make
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            gh release upload "$GITHUB_REF_NAME" ../dist/* --clobber
+            for a in $(gh release view "$GITHUB_REF_NAME" --json assets -q '.assets[].name'); do
+              [ -e "../dist/$a" ] || gh release delete-asset "$GITHUB_REF_NAME" "$a" -y
+            done
+            exit 0
+          fi
           gh release create "$GITHUB_REF_NAME" ../dist/* --title "TV Home $GITHUB_REF_NAME" --notes "- \`net.local.tvhome_*_all.ipk\`: normal build, with the diagnostics for tools/perf.
           - \`net.local.tvhome_*_all-lean.ipk\`: lean build, no diagnostics, tools or docs.
           - \`tvhome-*-scripts-and-config.zip\`: startup scripts, Home Assistant config, perf tools and app/service config, to use from a computer.

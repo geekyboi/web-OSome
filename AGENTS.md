@@ -168,7 +168,7 @@ the workflow fails if they differ. The release workflow makes
 a GitHub release with the normal `.ipk`, the lean `-lean.ipk` and a zip of the scripts and
 config, then rebuilds the Homebrew Channel repo on GitHub Pages (`tools/hbrepo/make-repo.js`:
 lean at `/apps.json`, normal at `/full/apps.json`). Force-pushing a tag that already has a
-release replaces its files. Pages URLs are case-sensitive (`geekyboi.github.io/web-OSome/`). Pages needs **Settings → Pages →
+release replaces its files and removes any the new build didn't make. Pages URLs are case-sensitive (`geekyboi.github.io/web-OSome/`). Pages needs **Settings → Pages →
 Source: GitHub Actions** set once on the GitHub repo.
 
 ## Start-up and standby
