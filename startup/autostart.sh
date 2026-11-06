@@ -141,7 +141,7 @@ stop_leftovers() {
   for d in /proc/[0-9]*; do
     p=${d#/proc/}
     [ "$p" = $$ ] && continue
-    case "$(tr '\0' '\n' <"$d/cmdline" 2>/dev/null | sed -n 2p)" in   # "sh .../startup/autostart.sh"
+    case "$(tr '\0' '\n' 2>/dev/null <"$d/cmdline" | sed -n 2p)" in   # "sh .../startup/autostart.sh"
       */startup/autostart.sh|startup/autostart.sh) ;;
       *) continue ;;
     esac
