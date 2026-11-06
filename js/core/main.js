@@ -78,10 +78,10 @@ document.addEventListener('keydown', function (e) {
 }, true);
 // The press that wakes the dimmed screen only wakes it: OK mustn't open the app you can't see yet.
 // Held down, its repeats are swallowed too; the next fresh press works as normal.
-var wakeKey = -1;
+var wakeKey = -1, sysWokeAt = 0;
 document.addEventListener('keydown', function (e) {
   var k = e.keyCode;
-  if (wake()) { wakeKey = k; e.preventDefault(); return; }
+  if (wake() || Date.now() - sysWokeAt < 500) { sysWokeAt = 0; wakeKey = k; e.preventDefault(); return; }
   if (e.repeat && k === wakeKey) { e.preventDefault(); return; }
   wakeKey = -1;
   if (settingsOpen()) { window.TVHOME_SETTINGS.onKey(e); return; }
@@ -125,6 +125,10 @@ document.addEventListener('mousemove', wake);
 document.addEventListener('click', function (e) {
   if (wake()) { e.preventDefault(); e.stopPropagation(); }
 }, true);
+// LG's screensaver opens over TV Home (blur) and the press that closes it doesn't always reach
+// the page, so undim when focus comes back. If that press does follow, it's swallowed as a wake
+// (as after the service's 'screen' activity, in service-link.js).
+window.addEventListener('focus', function () { if (wake()) { sysWokeAt = Date.now(); } });
 
 var returnedAt = 0;
 // Brought back to the front (Home pressed again, or returning from an app). toStart: Home was
