@@ -98,13 +98,18 @@ open_home() {
 # After the TV goes to standby, LG's Quick Start+ (qbd) closes TV Home about 1 s later.
 # Load it again hidden once that's done, if the TV is still off. LG sometimes closes it a second
 # time a moment later (with the other apps), so check again after 10 s, up to 3 loads in all.
+# Don't wait a fixed 5 s: LG can suspend the TV 5 s after standby, which freezes this before it
+# loads anything. Watch for the close instead (up to 5 s), then give LG 1 s to finish its sweep.
+running() { $LUNA -n 1 luna://com.webos.applicationManager/running '{}' </dev/null 2>/dev/null | grep -q "\"id\" *: *\"$APP\""; }
 preload_hidden() {
-  sleep 5
+  w=0
+  while [ $w -lt 10 ] && running; do sleep 0.5 2>/dev/null || sleep 1; w=$((w+1)); done
+  sleep 1
   n=0
   while :; do
     was_off "$(cat "$STATEF" 2>/dev/null)" || return
     [ -f /home/root/tvhome-no-preload ] && return
-    $LUNA -n 1 luna://com.webos.applicationManager/running '{}' </dev/null 2>/dev/null | grep -q "\"id\" *: *\"$APP\"" && return
+    running && return
     if [ $n -ge 3 ]; then log "standby: $APP closed again, giving up"; return; fi
     n=$((n+1))
     log "standby: loading $APP hidden (try $n)"
