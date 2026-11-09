@@ -179,7 +179,9 @@ This is the fiddliest part: read it before touching `startup/` or the start-up c
   `autostart.sh` watches the power state. On a wake it gives *Last source* up to `WAKE_WAIT`
   seconds to open TV Home itself (opening it twice strands LG's loading cover), but steps in
   at once if a resumed app such as Netflix is in front. At a full start it doesn't launch
-  again if TV Home is already in front. A new watcher stops leftover copies of itself, and one started by hand on a TV that's
+  again if TV Home is already in front. After it opens TV Home it re-takes the screen from LG's
+  home or live TV for `GUARD` s, and from an app the TV reopened for `APP_GUARD` s, but never from
+  an app opened after TV Home was in front (that's the user's pick). A new watcher stops leftover copies of itself, and one started by hand on a TV that's
   been up over 10 minutes leaves the screen alone.
 - **Standby preload:** LG closes TV Home on standby, so the watcher loads it again hidden
   (switching on is then ~0.4 s, not 2-5 s). LG sometimes closes it a second time, so it

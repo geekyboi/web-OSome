@@ -16,6 +16,7 @@ SKIP_IF_HDMI=0     # 1 = don't open TV Home if the TV woke up on an HDMI input
 APP_GUARD=5        # for this many seconds, also take the screen back from an app the TV
                    # reopened by itself (Start-up "Last source" resumes e.g. Netflix). 0 = off.
                    # This also overrides switching on with an app button on the remote.
+                   # Not once TV Home has been in front: then it's an app you opened.
 WAKE_WAIT=3        # on a wake from standby, wait this long for "Last source" to open TV Home
                    # before stepping in. 0 = open straight away (for Home Auto Launch).
 STANDBY_PRELOAD=1  # 1 = when the TV goes to standby, load TV Home again hidden a few seconds after
@@ -79,17 +80,20 @@ open_home() {
   # away and take the screen back if the TV's home screen or live TV covers TV Home.
   # So is an app the TV reopened itself in the first APP_GUARD seconds. HDMI inputs and
   # anything later (an app you picked) are left alone.
-  i=0
+  # Once TV Home has been in front, another app is one you opened (e.g. Netflix from a tile or
+  # the remote's button), not one the TV reopened: leave it, and stop checking.
+  i=0; seen=0
   while [ $i -lt "$GUARD" ]; do
     sleep 1; i=$((i+1))
     [ "$(cat "$STATEF" 2>/dev/null)" = Active ] || return   # switched off again
     fg=$(foreground)
     case "$fg" in
-      "$APP") ;;
+      "$APP") seen=1 ;;
       ""|com.webos.app.home|com.webos.app.livetv|com.webos.app.discovery|com.webos.app.lgchannels)
         log "${fg:-nothing} in front after ${i}s, opening again"; launch ;;
       com.webos.app.hdmi*|airplay) log "$fg in front after ${i}s, leaving it"; return ;;   # inputs, and AirPlay waking the TV
-      *) if [ $i -le "$APP_GUARD" ]; then log "$fg reopened after ${i}s, opening again"; launch
+      *) if [ $seen = 1 ]; then log "$fg opened after ${i}s, leaving it"; return
+         elif [ $i -le "$APP_GUARD" ]; then log "$fg reopened after ${i}s, opening again"; launch
          else log "$fg in front after ${i}s, leaving it"; return; fi ;;
     esac
   done
