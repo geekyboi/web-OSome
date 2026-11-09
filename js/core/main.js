@@ -81,6 +81,7 @@ document.addEventListener('keydown', function (e) {
 var wakeKey = -1, sysWokeAt = 0;
 document.addEventListener('keydown', function (e) {
   var k = e.keyCode;
+  if (guarding()) { e.preventDefault(); return; }   // the black guard screen is up (see guardHold)
   if (wake() || Date.now() - sysWokeAt < 500) { sysWokeAt = 0; wakeKey = k; e.preventDefault(); return; }
   if (e.repeat && k === wakeKey) { e.preventDefault(); return; }
   wakeKey = -1;
@@ -123,7 +124,7 @@ document.addEventListener('mousemove', function () { lastMove = Date.now(); }, t
 document.addEventListener('mousemove', wake);
 // A pointer click on the dimmed screen only wakes it too (capture, so it never reaches the tile).
 document.addEventListener('click', function (e) {
-  if (wake()) { e.preventDefault(); e.stopPropagation(); }
+  if (guarding() || wake()) { e.preventDefault(); e.stopPropagation(); }
 }, true);
 // LG's screensaver opens over TV Home (blur) and the press that closes it doesn't always reach
 // the page, so undim when focus comes back. If that press does follow, it's swallowed as a wake
@@ -150,6 +151,7 @@ function onReturn(toStart) {
 }
 var shownAt = 0;   // when TV Home last came back to the front
 document.addEventListener('webOSRelaunch', function () {
+  guardHold();
   onReturn(!document.hidden && Date.now() - shownAt > 1500);   // already in front: Home pressed on the home screen
 });
 document.addEventListener('visibilitychange', function () {
@@ -222,7 +224,8 @@ function liftHold() {
     perfMark(document.hidden ? 'ready-hidden' : 'ready');   // diag
     // preloaded in the background: nothing to see, so it's simply gone when TV Home is opened
     if (document.hidden) { hold.style.display = 'none'; introPending = true; return; }
-    waitCalm(function () {
+    waitCalm(function shown() {
+      if (guarding()) { setTimeout(shown, guardUntil - Date.now()); return; }
       perfMark('shown');   // diag
       // two frames, so the finished screen has been painted underneath before it's revealed
       requestAnimationFrame(function () { requestAnimationFrame(function () {
@@ -239,6 +242,27 @@ function liftHold() {
 // (under 60% busy three times running), for at most 25 s. Any other start goes straight on: the
 // TV has been on a while, or there's no service to ask.
 var HOLD_UNTIL = 57;
+/* Guard screen: when the autostart watcher opens TV Home at switch-on it passes { guard: <time> }.
+   LG can still reopen the app you had before standby (e.g. Netflix) a moment after TV Home shows,
+   and the watcher takes the screen back from an app until TV Home has been in front ~2 s. So for
+   GUARD_MS the screen stays black and presses are ignored: any app that opens then is LG's. */
+var GUARD_MS = 2500, guardUntil = 0;
+// Is the guard screen up (remote presses and clicks ignored)?
+function guarding() { return Date.now() < guardUntil; }
+// Show the black holding screen for GUARD_MS if the watcher asked for it just now.
+function guardHold() {
+  var p = {};
+  try { p = JSON.parse(window.PalmSystem && window.PalmSystem.launchParams || '{}') || {}; } catch (e) { /* none */ }
+  if (!(p.guard > 0) || Math.abs(Date.now() / 1000 - p.guard) > 10) { return; }   // an old launch's params
+  guardUntil = Date.now() + GUARD_MS;
+  var hold = $('hold');
+  if (!hold || hold.style.display !== 'none') { return; }   // still loading: liftHold waits for guardUntil
+  hold.style.display = ''; hold.classList.remove('out');
+  setTimeout(function () {
+    hold.classList.add('out');
+    setTimeout(function () { if (!guarding()) { hold.style.display = 'none'; } }, 800);
+  }, GUARD_MS);
+}
 function waitCalm(fn) {
   var t0 = Date.now(), calm = 0;
   (function ask() {
@@ -294,6 +318,7 @@ function init() {
   setInterval(function () { if (!document.hidden) { checkHA(); } }, 60000);
   discoverPlugins();
   connectService();
+  guardHold();
   liftHold();
   // Extras wait until the TV has calmed down: just after switch-on LG's own start-up keeps it busy
   // for a minute or so, and these would only compete with the screen and the remote.

@@ -238,7 +238,8 @@ OLED55A2 it made the TV restart and switch off. For the next 10 seconds it check
 puts LG's home screen or Live TV over TV Home, it opens TV Home again, and the same for an
 app the TV reopens by itself in the first 5 seconds (e.g. Netflix with *Last source*).
 An HDMI input (e.g. a console that woke the TV over HDMI-CEC), AirPlay, or an app you pick
-yourself once TV Home is on screen is left alone. It doesn't do this when the screen comes back from *Screen Off* (e.g.
+yourself once TV Home is on screen is left alone. When the watcher opens TV Home, the screen
+stays black for 2.5 seconds and ignores the remote, so an app that opens in that time is the TV's. It doesn't do this when the screen comes back from *Screen Off* (e.g.
 music playing with the screen off) or the screen saver.
 
 LG's *Quick Start+* closes TV Home every time the TV goes into standby, so switching on would

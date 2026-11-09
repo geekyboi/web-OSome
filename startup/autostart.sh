@@ -16,7 +16,7 @@ SKIP_IF_HDMI=0     # 1 = don't open TV Home if the TV woke up on an HDMI input
 APP_GUARD=5        # for this many seconds, also take the screen back from an app the TV
                    # reopened by itself (Start-up "Last source" resumes e.g. Netflix). 0 = off.
                    # This also overrides switching on with an app button on the remote.
-                   # Not once TV Home has been in front: then it's an app you opened.
+                   # Not once TV Home has been in front ~2 s: then it's an app you opened.
 WAKE_WAIT=3        # on a wake from standby, wait this long for "Last source" to open TV Home
                    # before stepping in. 0 = open straight away (for Home Auto Launch).
 STANDBY_PRELOAD=1  # 1 = when the TV goes to standby, load TV Home again hidden a few seconds after
@@ -75,25 +75,27 @@ open_home() {
       com.webos.app.hdmi*) log "woke on $fg, leaving it"; return ;;
     esac
   fi
-  launch
+  launch guard
   # Rather than waiting a fixed time for the TV's own start-up to finish, open straight
   # away and take the screen back if the TV's home screen or live TV covers TV Home.
   # So is an app the TV reopened itself in the first APP_GUARD seconds. HDMI inputs and
   # anything later (an app you picked) are left alone.
-  # Once TV Home has been in front, another app is one you opened (e.g. Netflix from a tile or
-  # the remote's button), not one the TV reopened: leave it, and stop checking.
+  # Once TV Home has been in front for two checks in a row, another app is one you opened (e.g.
+  # Netflix from a tile or the remote's button), not one the TV reopened: leave it, and stop
+  # checking. TV Home keeps the screen black and ignores presses for 2.5 s after a guarded open,
+  # so you can't open anything before then, and an app that opens sooner is LG's.
   i=0; seen=0
   while [ $i -lt "$GUARD" ]; do
     sleep 1; i=$((i+1))
     [ "$(cat "$STATEF" 2>/dev/null)" = Active ] || return   # switched off again
     fg=$(foreground)
     case "$fg" in
-      "$APP") seen=1 ;;
+      "$APP") seen=$((seen+1)) ;;
       ""|com.webos.app.home|com.webos.app.livetv|com.webos.app.discovery|com.webos.app.lgchannels)
-        log "${fg:-nothing} in front after ${i}s, opening again"; launch ;;
+        log "${fg:-nothing} in front after ${i}s, opening again"; seen=0; launch guard ;;
       com.webos.app.hdmi*|airplay) log "$fg in front after ${i}s, leaving it"; return ;;   # inputs, and AirPlay waking the TV
-      *) if [ $seen = 1 ]; then log "$fg opened after ${i}s, leaving it"; return
-         elif [ $i -le "$APP_GUARD" ]; then log "$fg reopened after ${i}s, opening again"; launch
+      *) if [ $seen -ge 2 ]; then log "$fg opened after ${i}s, leaving it"; return
+         elif [ $i -le "$APP_GUARD" ] || [ $seen = 1 ]; then log "$fg reopened after ${i}s, opening again"; seen=0; launch guard
          else log "$fg in front after ${i}s, leaving it"; return; fi ;;
     esac
   done
@@ -144,9 +146,11 @@ foreground() {
     sed -n 's/.*"appId" *: *"\([^"]*\)".*/\1/p'
 }
 
+# Open TV Home. "guard": TV Home stays black and ignores presses for a moment (see open_home).
 launch() {
   log "opening $APP"
-  $LUNA -n 1 luna://com.webos.applicationManager/launch "{\"id\":\"$APP\"}" </dev/null >/dev/null 2>&1 ||
+  p=""; [ "$1" = guard ] && p=",\"params\":{\"guard\":$(date +%s)}"
+  $LUNA -n 1 luna://com.webos.applicationManager/launch "{\"id\":\"$APP\"$p}" </dev/null >/dev/null 2>&1 ||
     log "launch failed"
 }
 
