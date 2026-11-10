@@ -81,6 +81,7 @@ document.addEventListener('keydown', function (e) {
 var wakeKey = -1, sysWokeAt = 0;
 document.addEventListener('keydown', function (e) {
   var k = e.keyCode;
+  if (guarding()) { e.preventDefault(); return; }   // the black guard screen is up (see guardHold)
   if (wake() || Date.now() - sysWokeAt < 500) { sysWokeAt = 0; wakeKey = k; e.preventDefault(); return; }
   if (e.repeat && k === wakeKey) { e.preventDefault(); return; }
   wakeKey = -1;
@@ -123,7 +124,7 @@ document.addEventListener('mousemove', function () { lastMove = Date.now(); }, t
 document.addEventListener('mousemove', wake);
 // A pointer click on the dimmed screen only wakes it too (capture, so it never reaches the tile).
 document.addEventListener('click', function (e) {
-  if (wake()) { e.preventDefault(); e.stopPropagation(); }
+  if (guarding() || wake()) { e.preventDefault(); e.stopPropagation(); }
 }, true);
 // LG's screensaver opens over TV Home (blur) and the press that closes it doesn't always reach
 // the page, so undim when focus comes back. If that press does follow, it's swallowed as a wake
@@ -150,13 +151,15 @@ function onReturn(toStart) {
 }
 var shownAt = 0;   // when TV Home last came back to the front
 document.addEventListener('webOSRelaunch', function () {
+  guardHold();
   onReturn(!document.hidden && Date.now() - shownAt > 1500);   // already in front: Home pressed on the home screen
 });
 document.addEventListener('visibilitychange', function () {
   if (!document.hidden) {
     shownAt = Date.now();
     onReturn(); eachPlugin('onShow');
-    if (introPending) { introTiles(); }   // right away, so the first visible frame already has them hidden; its 250 ms lead-in covers the screen waking
+    if (holdOnShow) { holdOnShow = false; startGuard(); }   // switched on: black first (see guardHold)
+    else if (introPending) { introTiles(); }   // right away, so the first visible frame already has them hidden; its 250 ms lead-in covers the screen waking
   }
 });
 window.addEventListener('resize', fit);
@@ -220,9 +223,10 @@ function liftHold() {
     // never reveal a half-built screen (just after switch-on this takes ~6 s); 15 s is only a safety net
     if (!(bgReady && layout && tiles && icons) && Date.now() - t0 < 15000) { setTimeout(check, 80); return; }
     perfMark(document.hidden ? 'ready-hidden' : 'ready');   // diag
-    // preloaded in the background: nothing to see, so it's simply gone when TV Home is opened
-    if (document.hidden) { hold.style.display = 'none'; introPending = true; return; }
-    waitCalm(function () {
+    // preloaded in standby: the black screen stays up for the guard when the TV is switched on
+    if (document.hidden) { holdOnShow = true; introPending = true; return; }
+    waitCalm(function shown() {
+      if (guarding()) { setTimeout(shown, guardUntil - Date.now()); return; }
       perfMark('shown');   // diag
       // two frames, so the finished screen has been painted underneath before it's revealed
       requestAnimationFrame(function () { requestAnimationFrame(function () {
@@ -239,6 +243,43 @@ function liftHold() {
 // (under 60% busy three times running), for at most 25 s. Any other start goes straight on: the
 // TV has been on a while, or there's no service to ask.
 var HOLD_UNTIL = 57;
+/* Guard screen: LG can still reopen the app you had before standby (e.g. Netflix) a moment after
+   TV Home shows, and the autostart watcher takes the screen back from an app until TV Home has
+   been in front ~2 s. So for GUARD_MS after switch-on the screen is black and presses are ignored:
+   any app that opens then is LG's. It starts when TV Home preloaded in standby is first shown, and
+   when the watcher opens TV Home at switch-on (it passes { guard: <time> }). */
+var GUARD_MS = 2500, guardUntil = 0, holdOnShow = false, guardFading = false;
+// Is the guard screen up (remote presses and clicks ignored)?
+function guarding() { return Date.now() < guardUntil; }
+// The watcher opened TV Home just now ({ guard } in the launch params): guard for GUARD_MS.
+function guardHold() {
+  var p = {};
+  try { p = JSON.parse(window.PalmSystem && window.PalmSystem.launchParams || '{}') || {}; } catch (e) { /* none */ }
+  if (!(p.guard > 0) || Math.abs(Date.now() / 1000 - p.guard) > 10) { return; }   // an old launch's params
+  var hold = $('hold');
+  // black already, or still loading (liftHold waits for guardUntil), or behind another app: guard
+  // from now. Already showing (LG can still name the app from before standby as in front): only
+  // ignore presses, as going black now would flash over the screen you're looking at.
+  var up = hold && hold.style.display !== 'none' && !hold.classList.contains('out');
+  if (!hold || up || !document.hidden) { guardUntil = Date.now() + GUARD_MS; return; }
+  startGuard();
+}
+// Black screen and presses ignored for GUARD_MS from now, then fade back to TV Home.
+function startGuard() {
+  var hold = $('hold');
+  guardUntil = Date.now() + GUARD_MS;
+  if (!hold) { return; }
+  hold.style.display = ''; hold.classList.remove('out');
+  if (guardFading) { return; }
+  guardFading = true;
+  (function fade() {
+    if (guarding()) { setTimeout(fade, guardUntil - Date.now()); return; }   // the watcher may extend it
+    guardFading = false;
+    hold.classList.add('out');
+    if (introPending) { introTiles(); }
+    setTimeout(function () { if (!guarding()) { hold.style.display = 'none'; } }, 800);
+  })();
+}
 function waitCalm(fn) {
   var t0 = Date.now(), calm = 0;
   (function ask() {
@@ -294,6 +335,7 @@ function init() {
   setInterval(function () { if (!document.hidden) { checkHA(); } }, 60000);
   discoverPlugins();
   connectService();
+  guardHold();
   liftHold();
   // Extras wait until the TV has calmed down: just after switch-on LG's own start-up keeps it busy
   // for a minute or so, and these would only compete with the screen and the remote.
