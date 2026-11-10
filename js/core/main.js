@@ -245,7 +245,8 @@ var HOLD_UNTIL = 57;
 /* Guard screen: when the autostart watcher opens TV Home at switch-on it passes { guard: <time> }.
    LG can still reopen the app you had before standby (e.g. Netflix) a moment after TV Home shows,
    and the watcher takes the screen back from an app until TV Home has been in front ~2 s. So for
-   GUARD_MS the screen stays black and presses are ignored: any app that opens then is LG's. */
+   GUARD_MS presses are ignored, and the screen stays black unless TV Home was already showing:
+   any app that opens then is LG's. */
 var GUARD_MS = 2500, guardUntil = 0;
 // Is the guard screen up (remote presses and clicks ignored)?
 function guarding() { return Date.now() < guardUntil; }
@@ -257,6 +258,9 @@ function guardHold() {
   guardUntil = Date.now() + GUARD_MS;
   var hold = $('hold');
   if (!hold || hold.style.display !== 'none') { return; }   // still loading: liftHold waits for guardUntil
+  // already on screen (LG can still name the app from before standby as in front): presses are
+  // ignored, but going black now would only flash over the screen you're looking at
+  if (!document.hidden) { return; }
   hold.style.display = ''; hold.classList.remove('out');
   setTimeout(function () {
     hold.classList.add('out');
